@@ -31,7 +31,7 @@ public class BinaryParser implements Parser {
             System.err.println("Usage: j-wasm <file-name.wasm> args*");
         }
 
-        File exectuable = new File("./" + args[0]);
+        File exectuable = new File(args[0]);
         int[] programArgument = new int[0];
 
         if (args.length > 1) {
