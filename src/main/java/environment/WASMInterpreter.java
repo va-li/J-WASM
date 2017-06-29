@@ -279,6 +279,7 @@ public class WASMInterpreter {
                     if (!ifExpression) { //we have else code here
                         stackFrame.setSkipCode(true);
                     }
+                    executingCodeStream.read();
                     break;
                 case BinaryFormat.Instructions.Control.CALL:
                     /***** Function call *****/
