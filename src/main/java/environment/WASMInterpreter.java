@@ -48,6 +48,7 @@ public class WASMInterpreter {
 
         while (executingCodeStream.available() != 0) {
             byte opCode = (byte) executingCodeStream.read();
+            int parameter;
 
             switch (opCode) {
                 /***************************
@@ -55,16 +56,24 @@ public class WASMInterpreter {
                  ****************************/
                 case BinaryFormat.Instructions.Numeric.I32_CONST:
                     //the int is LEB128 encoded, so read it and then add the operation
-                    operandStack.push(readUnsignedLeb128(executingCodeStream));
+                    parameter = readUnsignedLeb128(executingCodeStream);
+                    operandStack.push(parameter);
+                    instructionPointer += Leb128.unsignedLeb128Size(parameter);
                     break;
                 case BinaryFormat.Instructions.Variable.GET_LOCAL:
-                    callStack.peek().getLocalVariableByIndex(readUnsignedLeb128(executingCodeStream));
+                    parameter = readUnsignedLeb128(executingCodeStream);
+                    callStack.peek().getLocalVariableByIndex(parameter);
+                    instructionPointer += Leb128.unsignedLeb128Size(parameter);
                     break;
                 case BinaryFormat.Instructions.Variable.SET_LOCAL:
-                    callStack.peek().setLocalVariableByIndex(operandStack.pop(), readUnsignedLeb128(executingCodeStream));
+                    parameter = readUnsignedLeb128(executingCodeStream);
+                    callStack.peek().setLocalVariableByIndex(operandStack.pop(), parameter);
+                    instructionPointer += Leb128.unsignedLeb128Size(parameter);
                     break;
                 case BinaryFormat.Instructions.Variable.TEE_LOCAL:
-                    callStack.peek().setLocalVariableByIndex(operandStack.peek(), readUnsignedLeb128(executingCodeStream));
+                    parameter = readUnsignedLeb128(executingCodeStream);
+                    callStack.peek().setLocalVariableByIndex(operandStack.peek(), parameter);
+                    instructionPointer += Leb128.unsignedLeb128Size(parameter);
                     break;
 
                 /*****************************
@@ -197,6 +206,7 @@ public class WASMInterpreter {
                     break;
                 case BinaryFormat.Instructions.Control.CALL:
                     int calledFunctionIndex = Leb128.readUnsignedLeb128(executingCodeStream);
+                    instructionPointer += Leb128.unsignedLeb128Size(calledFunctionIndex);
                     Function calledFunction = functions.get(calledFunctionIndex);
 
                     // Set the return address for the current function
@@ -215,7 +225,13 @@ public class WASMInterpreter {
                     break;
 
                 case BinaryFormat.Instructions.Control.RETURN:
-                    //TODO: evaluate HOW
+                    int actualReturnValueCount = operandStack.size();
+                    int expectedReturnValueCount = callStack.peek().getFunction().getReturnValueCount();
+
+                    if (actualReturnValueCount > expectedReturnValueCount) {
+                        throw new RuntimeException("Wrong number of return values! Expected: " +
+                        expectedReturnValueCount + ", actual: " + actualReturnValueCount);
+                    }
                     break;
                 case BinaryFormat.Instructions.Control.END:
                     depth--;

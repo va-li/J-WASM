@@ -1,5 +1,8 @@
 package parser.binary;
 
+import static util.Leb128.readUnsignedLeb128;
+import static util.Leb128.unsignedLeb128Size;
+
 import constants.BinaryFormat;
 import environment.Function;
 import environment.WASMInterpreter;
@@ -14,8 +17,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static util.Leb128.readUnsignedLeb128;
 
 public class BinaryParser implements Parser {
 
@@ -218,21 +219,6 @@ public class BinaryParser implements Parser {
     }
 
 
-    /**
-     * Gets the number of bytes in the unsigned LEB128 encoding of the
-     * given value.
-     *
-     * @param value the value in question
-     * @return its write size, in bytes
-     */
-    public static int unsignedLeb128Size(int value) {
-        // TODO: This could be much cleverer.
-        int remaining = value >> 7;
-        int count = 0;
-        while (remaining != 0) {
-            remaining >>= 7;
-            count++;
-        }
-        return count + 1;
-    }
+
+
 }
