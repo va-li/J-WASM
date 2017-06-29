@@ -109,6 +109,7 @@ public class BinaryParser implements Parser {
             int bodySizeGuess = is.read();
 
             byte[] funcBody = new byte[bodySizeGuess];
+            is.read(funcBody);
             this.functions.get(currFun).setInstructions(funcBody);
 
             //we need to start at index 0 and inc with each loop
