@@ -3,6 +3,7 @@ package environment;
 import static util.Leb128.readUnsignedLeb128;
 
 import constants.BinaryFormat;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
@@ -31,10 +32,10 @@ public class WASMInterpreter {
         Stack<Integer> operandStack = new Stack<>();
 
         ByteArrayInputStream executingCodeStream =
-            new ByteArrayInputStream(executingFunction.getInstructions());
+                new ByteArrayInputStream(executingFunction.getInstructions());
 
         callStack.push(new CallStackFrame(executingFunction,
-            new int[executingFunction.getLocalVariableCount()], 0));
+                new int[executingFunction.getLocalVariableCount()], 0));
 
         while (executingCodeStream.available() != 0) {
             byte opCode = (byte) executingCodeStream.read();
@@ -98,13 +99,13 @@ public class WASMInterpreter {
                  * Unary instructions
                  *****************************/
                 case BinaryFormat.Instructions.Numeric.I32_CLZ:
-                    f.addInstruction(new I32Clz(helpStack.pop()));
+                    operandStack.push(Integer.numberOfLeadingZeros(operandStack.pop()));
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_CTZ:
-                    f.addInstruction(new I32Ctz(helpStack.pop()));
+                    operandStack.push(Integer.numberOfTrailingZeros(operandStack.pop()));
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_POPCNT:
-                    f.addInstruction(new I32Popcnt(helpStack.pop()));
+                    operandStack.push(Integer.bitCount(operandStack.pop()));
                     break;
 
 
@@ -112,57 +113,57 @@ public class WASMInterpreter {
                  * Arithmetic instructions
                  *********************************/
                 case BinaryFormat.Instructions.Numeric.I32_ADD:
-                    f.addInstruction(new I32Add(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(operandStack.pop() + operandStack.pop());
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_SUB:
-                    f.addInstruction(new I32Sub(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(operandStack.pop() - operandStack.pop());
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_MUL:
-                    f.addInstruction(new I32Mul(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(operandStack.pop() * operandStack.pop());
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_DIV_S:
-                    f.addInstruction(new I32DivS(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(operandStack.pop() / operandStack.pop());
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_DIV_U:
-                    f.addInstruction(new I32DivU(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(Math.floorDiv(operandStack.pop(), operandStack.pop()));
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_REM_S:
-                    f.addInstruction(new I32RemS(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(operandStack.pop() % operandStack.pop());
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_REM_U:
-                    f.addInstruction(new I32RemU(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(Math.floorMod(operandStack.pop(), operandStack.pop()));
                     break;
 
                 /*********************************
                  * Logical instructions
                  *********************************/
                 case BinaryFormat.Instructions.Numeric.I32_AND:
-                    f.addInstruction(new I32And(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(operandStack.pop() & operandStack.pop());
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_OR:
-                    f.addInstruction(new I32Or(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(operandStack.pop() | operandStack.pop());
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_XOR:
-                    f.addInstruction(new I32XOr(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(operandStack.pop() ^ operandStack.pop());
                     break;
 
                 /*********************************
                  * Bitwise instructions
                  *********************************/
                 case BinaryFormat.Instructions.Numeric.I32_SHL:
-                    f.addInstruction(new I32Shl(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(operandStack.pop() << operandStack.pop());
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_SHR_S:
-                    f.addInstruction(new I32ShrS(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(operandStack.pop() >> operandStack.pop());
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_SHR_U:
-                    f.addInstruction(new I32ShrU(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(operandStack.pop() >>> operandStack.pop());
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_ROTL:
-                    f.addInstruction(new I32Rotl(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(Integer.rotateLeft(operandStack.pop(), operandStack.pop()));
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_ROTR:
-                    f.addInstruction(new I32Rotr(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(Integer.rotateRight(operandStack.pop(), operandStack.pop()));
                     break;
 
 
