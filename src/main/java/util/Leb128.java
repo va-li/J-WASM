@@ -1,5 +1,6 @@
 package util;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import parser.ParserException;
@@ -14,7 +15,7 @@ public class Leb128 {
      * Thank you android dex for the source!
      * https://github.com/facebook/buck/blob/master/third-party/java/dx/src/com/android/dex/Leb128.java
      */
-    public static int readUnsignedLeb128(InputStream in) throws IOException {
+    public static int readUnsignedLeb128(ByteArrayInputStream in) {
         int result = 0;
         int cur;
         int count = 0;

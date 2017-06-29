@@ -1,5 +1,7 @@
 package environment;
 
+import static util.Leb128.readUnsignedLeb128;
+
 import constants.BinaryFormat;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -43,7 +45,7 @@ public class WASMInterpreter {
                  ****************************/
                 case BinaryFormat.Instructions.Numeric.I32_CONST:
                     //the int is LEB128 encoded, so read it and then add the operation
-                    helpStack.push(new I32Const(readUnsignedLeb128(is)));
+                    operandStack.push(readUnsignedLeb128(executingCodeStream));
                     break;
                 case BinaryFormat.Instructions.Variable.GET_LOCAL:
                     helpStack.push(new I32GetLocal(is.read()));
