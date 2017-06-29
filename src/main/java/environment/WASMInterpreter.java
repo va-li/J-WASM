@@ -8,6 +8,8 @@ import parser.ParserException;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
 
@@ -92,6 +94,10 @@ public class WASMInterpreter {
                     }
                 }
                 if (BinaryFormat.Instructions.Control.END == opCode) {
+                    if (stackFrame.getEndStack().size() == 0) {
+                        System.out.println(Arrays.toString(operandStack.toArray()));
+                        return;
+                    }
                     stackFrame.getEndStack().pop();
                 }
                 instructionPointer++;
@@ -308,12 +314,12 @@ public class WASMInterpreter {
 
                     if (callStack.size() == 1) {
                         int expectedReturnValueCount = callStack.peek().getFunction()
-                            .getReturnValueCount();
+                                .getReturnValueCount();
                         int actualReturnValueCount = operandStack.size() - callStack.peek().getOperandStackBase();
 
                         if (expectedReturnValueCount != actualReturnValueCount) {
                             throw new ParserException("Wrong number of return values! Expected: " +
-                                expectedReturnValueCount + ", actual: " + actualReturnValueCount);
+                                    expectedReturnValueCount + ", actual: " + actualReturnValueCount);
                         }
                         // Exit execution
                         return;

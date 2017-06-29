@@ -1,6 +1,6 @@
 (module
   (type (;0;) (func (param i32) (result i32)))
-  (type (;1;) (func)
+  (type (;1;) (func))
   (func (;0;) (type 0) (param i32) (result i32)
     get_local 0
     i32.const 3
