@@ -1,7 +1,5 @@
 package parser.binary;
 
-import static util.Leb128.readUnsignedLeb128;
-
 import constants.BinaryFormat;
 import environment.Function;
 import environment.WASMInterpreter;
@@ -11,12 +9,13 @@ import parser.ParserException;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static util.Leb128.readUnsignedLeb128;
 
 public class BinaryParser implements Parser {
 
@@ -98,7 +97,7 @@ public class BinaryParser implements Parser {
         new WASMInterpreter(this.functions, this.startFunctionIndex).execute();
     }
 
-    private void readCodeSection(final InputStream is)
+    private void readCodeSection(final ByteArrayInputStream is)
             throws IOException, ParserException {
         //section size guess for skipping purpose
         int sectionSizeGuess = is.read();
@@ -125,7 +124,7 @@ public class BinaryParser implements Parser {
         }
     }
 
-    private void readStartSection(final InputStream is)
+    private void readStartSection(final ByteArrayInputStream is)
             throws IOException, ParserException {
         //section size guess for skipping purpose
         int sectionSizeGuess = is.read();
@@ -134,7 +133,7 @@ public class BinaryParser implements Parser {
         this.startFunctionIndex = is.read();
     }
 
-    private void readMemorySection(final InputStream is)
+    private void readMemorySection(final ByteArrayInputStream is)
             throws IOException, ParserException {
         //section size guess for skipping purpose
         int sectionSizeGuess = is.read();
@@ -155,7 +154,7 @@ public class BinaryParser implements Parser {
         }
     }
 
-    private void readFunctionSection(final InputStream is)
+    private void readFunctionSection(final ByteArrayInputStream is)
             throws IOException, ParserException {
         //section size guess for skipping purpose
         int sectionSizeGuess = is.read();
@@ -170,7 +169,7 @@ public class BinaryParser implements Parser {
         }
     }
 
-    private void readTypeSection(final InputStream is)
+    private void readTypeSection(final ByteArrayInputStream is)
             throws IOException, ParserException {
         //section size guess for skipping purpose
         int sectionSizeGuess = is.read();
@@ -217,7 +216,6 @@ public class BinaryParser implements Parser {
             numTypes--;
         }
     }
-
 
 
     /**

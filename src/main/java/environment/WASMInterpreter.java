@@ -1,13 +1,13 @@
 package environment;
 
-import static util.Leb128.readUnsignedLeb128;
-
 import constants.BinaryFormat;
+import parser.ParserException;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.List;
 import java.util.Stack;
+
+import static util.Leb128.readUnsignedLeb128;
 
 /**
  * Created by Valentin
@@ -171,10 +171,10 @@ public class WASMInterpreter {
                  * Control instructions
                  *****************************/
                 case BinaryFormat.Instructions.Control.UNREACHABLE:
-                    f.addInstruction(new UnreachableInstr());
+                    throw new ParserException("You reached unreachable code!");
                     break;
                 case BinaryFormat.Instructions.Control.NOP:
-                    f.addInstruction(new NoOperationInstr());
+                    //NO-OP
                     break;
                 case BinaryFormat.Instructions.Control.BLOCK:
                     //TODO: I don't think we'll implement this
@@ -183,14 +183,9 @@ public class WASMInterpreter {
                     //TODO: Wait for loop instruction
                     break;
                 case BinaryFormat.Instructions.Control.IF:
-                    int instr = is.read();
-                    while (instr != BinaryFormat.Instructions.Control.ELSE) {
-                        switch (instr) {
-                            case -1:
-                                throw new ParserException("Unexpected end of file! @If then else");
-                        }
-                    }
-                    //f.addInstruction();
+                    this.ifLevel++;
+                    this.ifExpression = operandStack.pop() != 0;
+                    if()
                     break;
                 case BinaryFormat.Instructions.Control.CALL:
                     int funIndex = is.read();
@@ -201,7 +196,9 @@ public class WASMInterpreter {
                 case BinaryFormat.Instructions.Control.RETURN:
                     //TODO: evaluate HOW
                     break;
-                        case
+                case BinaryFormat.Instructions.Control.END:
+                    depth--;
+                    break;
                 case -1:
                     throw new ParserException("Unexpected end of file! @code 0x10 body");
                 default:
