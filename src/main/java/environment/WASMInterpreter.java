@@ -53,26 +53,34 @@ public class WASMInterpreter {
 
             CallStackFrame stackFrame = callStack.peek();
             if (stackFrame.isSkipCode()) {
-                //when we see another block thing increment depth
-                if (BinaryFormat.Instructions.Control.IF == opCode ||
-                        BinaryFormat.Instructions.Control.BLOCK == opCode ||
-                        BinaryFormat.Instructions.Control.LOOP == opCode) {
-                    stackFrame.setDepth(stackFrame.getDepth() + 1);
+                //when we see another block thing throw it into our stack
+                if (BinaryFormat.Instructions.Control.IF == opCode) {
+                    stackFrame.getEndStack().push(CallStackFrame.EndValue.IF);
                     continue;
                 }
+                if (BinaryFormat.Instructions.Control.BLOCK == opCode) {
+                    stackFrame.getEndStack().push(CallStackFrame.EndValue.BLOCK);
+                    continue;
+                }
+                if (BinaryFormat.Instructions.Control.LOOP == opCode) {
+                    stackFrame.getEndStack().push(CallStackFrame.EndValue.LOOP);
+                    continue;
+                }
+
+
                 if (!stackFrame.isIfBranch()) { //skipCode && else
-                    if (stackFrame.getDepth() == stackFrame.getIfDepth()) {
+                    if (stackFrame.getEndStack().size() == stackFrame.getIfDepth()) {
                         if (BinaryFormat.Instructions.Control.ELSE == opCode) {
                             stackFrame.setSkipCode(false);
                             continue;
                         }
                     }
                 } else { //skipCode && if
-                    if (stackFrame.getIfDepth() == stackFrame.getDepth()) {
+                    if (stackFrame.getIfDepth() == stackFrame.getEndStack().size()) {
                         if (BinaryFormat.Instructions.Control.END == opCode) {
                             stackFrame.setSkipCode(false);
+                            stackFrame.getEndStack().pop();
                             stackFrame.setIfDepth(stackFrame.getIfDepth() - 1);
-                            stackFrame.setDepth(stackFrame.getDepth() - 1);
                             continue;
                         }
                     }
@@ -123,32 +131,32 @@ public class WASMInterpreter {
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LT_U:
                     operandStack.push(
-                        Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) > 0 ? 1
-                            : 0);
+                            Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) > 0 ? 1
+                                    : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GT_S:
                     operandStack.push(operandStack.pop() < operandStack.pop() ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GT_U:
                     operandStack.push(
-                        Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) < 0 ? 1
-                            : 0);
+                            Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) < 0 ? 1
+                                    : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LE_S:
                     operandStack.push(operandStack.pop() >= operandStack.pop() ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LE_U:
                     operandStack.push(
-                        Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) >= 0 ? 1
-                            : 0);
+                            Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) >= 0 ? 1
+                                    : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GE_S:
                     operandStack.push(operandStack.pop() <= operandStack.pop() ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GE_U:
                     operandStack.push(
-                        Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) <= 0 ? 1
-                            : 0);
+                            Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) <= 0 ? 1
+                                    : 0);
                     break;
 
                 /*****************************
@@ -235,8 +243,12 @@ public class WASMInterpreter {
                 case BinaryFormat.Instructions.Control.LOOP:
                     //TODO: Wait for loop instruction
                     break;
+                case BinaryFormat.Instructions.Control.ELSE:
+                    //TODO: hopefully this is right...
+                    stackFrame.setSkipCode(true);
+                    break;
                 case BinaryFormat.Instructions.Control.IF:
-                    stackFrame.setDepth(stackFrame.getDepth() + 1);
+                    stackFrame.getEndStack().push(CallStackFrame.EndValue.IF);
                     stackFrame.setIfDepth(stackFrame.getIfDepth() + 1);
                     boolean ifExpression = operandStack.pop() != 0;
                     stackFrame.setIfBranch(ifExpression);
@@ -256,26 +268,26 @@ public class WASMInterpreter {
 
                     // Push the new function with its parameters to the call stack
                     callStack.push(new CallStackFrame(calledFunction,
-                        new int[calledFunction.getLocalVariableCount()]));
+                            new int[calledFunction.getLocalVariableCount()]));
                     for (int i = calledFunction.getParameterCount() - 1; i > 0; i--) {
                         callStack.peek().setLocalVariableByIndex(operandStack.pop(), i);
                     }
 
                     // Set the new code and instruction pointer
                     executingCodeStream = new ByteArrayInputStream(
-                        calledFunction.getInstructions());
+                            calledFunction.getInstructions());
                     instructionPointer = callStack.peek().getInstructionPointer();
                     break;
 
                 case BinaryFormat.Instructions.Control.RETURN:
                     /***** Function return *****/
                     int expectedReturnValueCount = callStack.peek().getFunction()
-                        .getReturnValueCount();
+                            .getReturnValueCount();
                     int actualReturnValueCount = operandStack.size() - callStack.peek().getOperandStackBase();
 
                     if (expectedReturnValueCount != actualReturnValueCount) {
                         throw new ParserException("Wrong number of return values! Expected: " +
-                            expectedReturnValueCount + ", actual: " + actualReturnValueCount);
+                                expectedReturnValueCount + ", actual: " + actualReturnValueCount);
                     }
 
                     if (callStack.size() == 1) {
@@ -291,7 +303,8 @@ public class WASMInterpreter {
                     }
                     break;
                 case BinaryFormat.Instructions.Control.END:
-                    stackFrame.setDepth(stackFrame.getDepth() - 1);
+                    //TODO: check for loop
+                    stackFrame.getEndStack().pop();
                     break;
                 case -1:
                     throw new ParserException("Unexpected end of file! @code 0x10 body");
