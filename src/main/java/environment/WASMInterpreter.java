@@ -299,9 +299,8 @@ public class WASMInterpreter {
                     }
 
                     // Set the new code and instruction pointer
-                    executingCodeStream = new ByteArrayInputStream(
-                            calledFunction.getInstructions());
                     instructionPointer = callStack.peek().getInstructionPointer();
+                    executingCodeStream = new ByteArrayInputStream(calledFunction.getInstructions());
                     break;
 
                 case BinaryFormat.Instructions.Control.RETURN:
@@ -317,12 +316,13 @@ public class WASMInterpreter {
                                 expectedReturnValueCount + ", actual: " + actualReturnValueCount);
                         }
                         // Exit execution
-                        System.out.println("Result");
                         return;
                     } else {
                         // Return to the previous function context
                         callStack.pop();
+                        Function returnedFunction = callStack.peek().getFunction();
                         instructionPointer = callStack.peek().getInstructionPointer();
+                        executingCodeStream = new ByteArrayInputStream(returnedFunction.getInstructions(), (int) instructionPointer + 1, returnedFunction.getInstructions().length);
                     }
                     break;
                 case BinaryFormat.Instructions.Control.END:
