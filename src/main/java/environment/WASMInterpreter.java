@@ -272,7 +272,7 @@ public class WASMInterpreter {
 
                     // Push the new function with its parameters to the call stack
                     callStack.push(new CallStackFrame(calledFunction,
-                            new int[calledFunction.getLocalVariableCount() + executingFunction.getParameterCount()]));
+                            new int[calledFunction.getLocalVariableCount() + calledFunction.getParameterCount()]));
                     for (int i = calledFunction.getParameterCount() - 1; i >= 0; i--) {
                         callStack.peek().setLocalVariableByIndex(operandStack.pop(), i);
                     }
