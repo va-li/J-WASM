@@ -48,13 +48,13 @@ public class WASMInterpreter {
                     operandStack.push(readUnsignedLeb128(executingCodeStream));
                     break;
                 case BinaryFormat.Instructions.Variable.GET_LOCAL:
-                    helpStack.push(new I32GetLocal(is.read()));
+                    callStack.peek().getLocalVariableByIndex(readUnsignedLeb128(executingCodeStream));
                     break;
                 case BinaryFormat.Instructions.Variable.SET_LOCAL:
-                    //TODO
+                    callStack.peek().setLocalVariableByIndex(operandStack.pop(), readUnsignedLeb128(executingCodeStream));
                     break;
                 case BinaryFormat.Instructions.Variable.TEE_LOCAL:
-                    //TODO
+                    callStack.peek().setLocalVariableByIndex(operandStack.peek(), readUnsignedLeb128(executingCodeStream));
                     break;
 
                 /*****************************

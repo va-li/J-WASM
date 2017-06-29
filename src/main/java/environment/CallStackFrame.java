@@ -29,6 +29,10 @@ public class CallStackFrame {
         return localVariables[index];
     }
 
+    public void setLocalVariableByIndex(int value, int index) {
+        localVariables[index] = value;
+    }
+
     public long getInstructionPointer() {
         return instructionPointer;
     }
