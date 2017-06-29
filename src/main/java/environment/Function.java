@@ -41,7 +41,7 @@ public class Function {
     }
 
     public int getLocalVariableCount() {
-        return localVariableCount + parameterCount;
+        return localVariableCount;
     }
 
     public void setLocalVariableCount(int localVariableCount) {
