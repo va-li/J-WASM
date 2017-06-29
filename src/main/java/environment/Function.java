@@ -6,32 +6,40 @@ package environment;
  */
 public class Function {
 
-    private final byte[] instructions;
-    private final int parameterCount;
-    private final int returnValueCount;
-    private final int localVariableCount;
-
-    public Function(byte[] instructions, int parameterCount, int returnValueCount,
-        int localVariableCount) {
-        this.instructions = instructions;
-        this.parameterCount = parameterCount;
-        this.returnValueCount = returnValueCount;
-        this.localVariableCount = localVariableCount;
-    }
+    private byte[] instructions;
+    private int parameterCount;
+    private int returnValueCount;
+    private int localVariableCount;
 
     public byte[] getInstructions() {
         return instructions;
+    }
+
+    public void setInstructions(byte[] instructions) {
+        this.instructions = instructions;
     }
 
     public int getParameterCount() {
         return parameterCount;
     }
 
+    public void setParameterCount(int parameterCount) {
+        this.parameterCount = parameterCount;
+    }
+
     public int getReturnValueCount() {
         return returnValueCount;
     }
 
+    public void setReturnValueCount(int returnValueCount) {
+        this.returnValueCount = returnValueCount;
+    }
+
     public int getLocalVariableCount() {
         return localVariableCount;
+    }
+
+    public void setLocalVariableCount(int localVariableCount) {
+        this.localVariableCount = localVariableCount;
     }
 }

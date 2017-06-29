@@ -22,6 +22,8 @@ public class WASMInterpreter {
     }
 
     public void execute() {
-        Function executingFunction = null;
+        // Set up the local variables and both stacks
+        Function executingFunction = functions.get(startFunctionIndex);
+
     }
 }
