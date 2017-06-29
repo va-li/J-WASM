@@ -6,6 +6,7 @@ import static util.Leb128.unsignedLeb128Size;
 import constants.BinaryFormat;
 import environment.Function;
 import environment.WASMInterpreter;
+import java.lang.reflect.Field;
 import parser.Parser;
 import parser.ParserException;
 
@@ -26,14 +27,30 @@ public class BinaryParser implements Parser {
     private int startFunctionIndex = -1;
 
     public static void main(String[] args) throws IOException {
+        if (args.length < 1) {
+            System.err.println("Usage: j-wasm <file-name.wasm> args*");
+        }
+
+        File exectuable = new File("./" + args[0]);
+        int[] programArgument = new int[0];
+
+        if (args.length > 1) {
+            programArgument = new int[args.length - 1];
+
+            int argIdx = args.length - 1;
+            while (argIdx > 0) {
+                programArgument[argIdx] = Integer.parseInt(args[argIdx]);
+            }
+        }
+
         Parser p = new BinaryParser();
-        p.parse(new File("wabt_tests/factorial1.wasm"));
+        p.parse(exectuable, programArgument);
 
         //for breakpoint purpose
         int i = 1;
     }
 
-    public void parse(File file) throws IOException, ParserException {
+    public void parse(File file, int[] programArguments) throws IOException, ParserException {
 
         byte[] code = Files.readAllBytes(Paths.get(file.toURI()));
 
@@ -95,7 +112,7 @@ public class BinaryParser implements Parser {
                     throw new ParserException("Not a valid section type");
             }
         }
-        new WASMInterpreter(this.functions, this.startFunctionIndex).execute(new int[0]);
+        new WASMInterpreter(this.functions, this.startFunctionIndex).execute(programArguments);
     }
 
     private void readCodeSection(final ByteArrayInputStream is)

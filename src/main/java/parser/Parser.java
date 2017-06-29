@@ -11,5 +11,5 @@ public interface Parser {
     /**
      * Parses the given InputStream until EOF or an error occured
      */
-    void parse(File file) throws ParserException, IOException;
+    void parse(File file, int[] executable) throws ParserException, IOException;
 }
