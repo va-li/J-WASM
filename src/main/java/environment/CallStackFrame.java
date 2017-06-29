@@ -10,20 +10,20 @@ public class CallStackFrame {
 
     private final Function function;
     private final int[] localVariables;
-    private long instructionPointer;
+
+    private long instructionPointer = 0;
 
     private int depth = 0;
     private int ifDepth = 0;
+    private int operandStackBase = 0;
     private boolean ifBranch = true;
     private boolean skipCode = true;
 
     private final Stack<EndValue> endStack = new Stack<>();
 
-    public CallStackFrame(Function function, int[] localVariables,
-                          long instructionPointer) {
+    public CallStackFrame(Function function, int[] localVariables) {
         this.function = function;
         this.localVariables = localVariables;
-        this.instructionPointer = instructionPointer;
     }
 
     public Function getFunction() {
@@ -64,6 +64,14 @@ public class CallStackFrame {
 
     public void setIfDepth(int ifDepth) {
         this.ifDepth = ifDepth;
+    }
+
+    public int getOperandStackBase() {
+        return operandStackBase;
+    }
+
+    public void setOperandStackBase(int operandStackBase) {
+        this.operandStackBase = operandStackBase;
     }
 
     public boolean isIfBranch() {

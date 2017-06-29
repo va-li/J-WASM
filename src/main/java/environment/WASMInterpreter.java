@@ -45,7 +45,7 @@ public class WASMInterpreter {
                 new ByteArrayInputStream(executingFunction.getInstructions());
 
         callStack.push(new CallStackFrame(executingFunction,
-                new int[executingFunction.getLocalVariableCount()], 0));
+                new int[executingFunction.getLocalVariableCount()]));
 
         while (executingCodeStream.available() != 0) {
             byte opCode = (byte) executingCodeStream.read();
@@ -122,25 +122,33 @@ public class WASMInterpreter {
                     operandStack.push(operandStack.pop() > operandStack.pop() ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LT_U:
-                    operandStack.push(Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) > 0 ? 1 : 0);
+                    operandStack.push(
+                        Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) > 0 ? 1
+                            : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GT_S:
                     operandStack.push(operandStack.pop() < operandStack.pop() ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GT_U:
-                    operandStack.push(Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) < 0 ? 1 : 0);
+                    operandStack.push(
+                        Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) < 0 ? 1
+                            : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LE_S:
                     operandStack.push(operandStack.pop() >= operandStack.pop() ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LE_U:
-                    operandStack.push(Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) >= 0 ? 1 : 0);
+                    operandStack.push(
+                        Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) >= 0 ? 1
+                            : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GE_S:
                     operandStack.push(operandStack.pop() <= operandStack.pop() ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GE_U:
-                    operandStack.push(Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) <= 0 ? 1 : 0);
+                    operandStack.push(
+                        Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) <= 0 ? 1
+                            : 0);
                     break;
 
                 /*****************************
@@ -155,7 +163,6 @@ public class WASMInterpreter {
                 case BinaryFormat.Instructions.Numeric.I32_POPCNT:
                     operandStack.push(Integer.bitCount(operandStack.pop()));
                     break;
-
 
                 /*********************************
                  * Arithmetic instructions
@@ -214,13 +221,11 @@ public class WASMInterpreter {
                     operandStack.push(Integer.rotateRight(operandStack.pop(), operandStack.pop()));
                     break;
 
-
                 /******************************
                  * Control instructions
                  *****************************/
                 case BinaryFormat.Instructions.Control.UNREACHABLE:
                     throw new ParserException("You reached unreachable code!");
-                    break;
                 case BinaryFormat.Instructions.Control.NOP:
                     //NO-OP
                     break;
@@ -246,56 +251,56 @@ public class WASMInterpreter {
                     Function calledFunction = functions.get(calledFunctionIndex);
 
                     // Set the return address for the current function
-                    instructionPointer++;
                     callStack.peek().setInstructionPointer(instructionPointer);
+                    callStack.peek().setOperandStackBase(operandStack.size());
 
                     // Push the new function with its parameters to the call stack
-                    callStack.push(new CallStackFrame(calledFunction, new int[calledFunction.getLocalVariableCount()], 0));
+                    callStack.push(new CallStackFrame(calledFunction,
+                        new int[calledFunction.getLocalVariableCount()]));
                     for (int i = calledFunction.getParameterCount() - 1; i > 0; i--) {
                         callStack.peek().setLocalVariableByIndex(operandStack.pop(), i);
                     }
 
                     // Set the new code and instruction pointer
-                    executingCodeStream = new ByteArrayInputStream(calledFunction.getInstructions());
+                    executingCodeStream = new ByteArrayInputStream(
+                        calledFunction.getInstructions());
                     instructionPointer = callStack.peek().getInstructionPointer();
                     break;
 
                 case BinaryFormat.Instructions.Control.RETURN:
                     /***** Function return *****/
-                    int expectedReturnValueCount = callStack.peek().getFunction().getReturnValueCount();
-                    int actualReturnValueCount = operandStack.size() - operandStackBase;
+                    int expectedReturnValueCount = callStack.peek().getFunction()
+                        .getReturnValueCount();
+                    int actualReturnValueCount = operandStack.size() - callStack.peek().getOperandStackBase();
 
                     if (expectedReturnValueCount != actualReturnValueCount) {
                         throw new ParserException("Wrong number of return values! Expected: " +
-                                expectedReturnValueCount + ", actual: " + actualReturnValueCount);
-                        if (actualReturnValueCount > expectedReturnValueCount) {
-                            throw new RuntimeException("Wrong number of return values! Expected: " +
-                                    expectedReturnValueCount + ", actual: " + actualReturnValueCount);
-                        }
-
-
-                        if (callStack.size() == 1) {
-                            // Exit execution
-                            if (operandStack.size() != 0) {
-                                throw new ParserException("Start function must not return anything!");
-                            }
-                            return;
-                        } else {
-                            // Return to the previous function context
-                            callStack.pop();
-                            instructionPointer = callStack.peek().getInstructionPointer();
-                        }
-                        break;
-                        case BinaryFormat.Instructions.Control.END:
-                            stackFrame.setDepth(stackFrame.getDepth() - 1);
-                            break;
-                        case -1:
-                            throw new ParserException("Unexpected end of file! @code 0x10 body");
-                        default:
-                            throw new ParserException("Invalid (or not implemented) instruction!");
-
+                            expectedReturnValueCount + ", actual: " + actualReturnValueCount);
                     }
+
+                    if (callStack.size() == 1) {
+                        // Exit execution
+                        if (operandStack.size() != 0) {
+                            throw new ParserException("Start function must not return anything!");
+                        }
+                        return;
+                    } else {
+                        // Return to the previous function context
+                        callStack.pop();
+                        instructionPointer = callStack.peek().getInstructionPointer();
+                    }
+                    break;
+                case BinaryFormat.Instructions.Control.END:
+                    stackFrame.setDepth(stackFrame.getDepth() - 1);
+                    break;
+                case -1:
+                    throw new ParserException("Unexpected end of file! @code 0x10 body");
+                default:
+                    throw new ParserException("Invalid (or not implemented) instruction!");
+
             }
+            instructionPointer++;
         }
+        throw new ParserException("Unexpected end of execution");
     }
 }

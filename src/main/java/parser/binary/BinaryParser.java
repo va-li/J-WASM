@@ -95,7 +95,7 @@ public class BinaryParser implements Parser {
                     throw new ParserException("Not a valid section type");
             }
         }
-        new WASMInterpreter(this.functions, this.startFunctionIndex).execute();
+        new WASMInterpreter(this.functions, this.startFunctionIndex).execute(new int[0]);
     }
 
     private void readCodeSection(final ByteArrayInputStream is)
