@@ -3,13 +3,10 @@ package environment;
 import static util.Leb128.readUnsignedLeb128;
 
 import constants.BinaryFormat;
-import parser.Parser;
 import parser.ParserException;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
 
@@ -35,11 +32,11 @@ public class WASMInterpreter {
         // Set up the local variables and both stacks
         Function executingFunction = functions.get(startFunctionIndex);
         Stack<CallStackFrame> callStack = new Stack<>();
-        Stack<Integer> operandStack = new Stack<>();
+        Stack<Long> operandStack = new Stack<>();
 
         // Push the parameters to the stack
         callStack.push(new CallStackFrame(executingFunction,
-                new int[executingFunction.getLocalVariableCount() + executingFunction.getParameterCount()]));
+                new long[executingFunction.getLocalVariableCount() + executingFunction.getParameterCount()]));
 
         for (int i = 0; i < parameters.length; i++) {
             int parameter = parameters[i];
@@ -111,7 +108,7 @@ public class WASMInterpreter {
                 case BinaryFormat.Instructions.Numeric.I32_CONST:
                     //the int is LEB128 encoded, so read it and then add the operation
                     parameter = readUnsignedLeb128(executingCodeStream);
-                    operandStack.push(parameter);
+                    operandStack.push((long)parameter);
                     instructionPointer += Leb128.unsignedLeb128Size(parameter);
                     break;
                 case BinaryFormat.Instructions.Variable.GET_LOCAL:
@@ -134,44 +131,44 @@ public class WASMInterpreter {
                  * Test instructions
                  *****************************/
                 case BinaryFormat.Instructions.Numeric.I32_EQZ:
-                    operandStack.push(operandStack.pop() == 0 ? 1 : 0);
+                    operandStack.push(operandStack.pop() == 0 ? 1L : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_EQ:
-                    operandStack.push(operandStack.pop().equals(operandStack.pop()) ? 1 : 0);
+                    operandStack.push(operandStack.pop().equals(operandStack.pop()) ? 1L : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_NE:
-                    operandStack.push(!operandStack.pop().equals(operandStack.pop()) ? 1 : 0);
+                    operandStack.push(!operandStack.pop().equals(operandStack.pop()) ? 1L : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LT_S:
-                    operandStack.push(operandStack.pop() > operandStack.pop() ? 1 : 0);
+                    operandStack.push(operandStack.pop() > operandStack.pop() ? 1L : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LT_U:
                     operandStack.push(
-                            Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) > 0 ? 1
+                            Long.compareUnsigned(operandStack.pop(), operandStack.pop()) > 0 ? 1L
                                     : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GT_S:
-                    operandStack.push(operandStack.pop() < operandStack.pop() ? 1 : 0);
+                    operandStack.push(operandStack.pop() < operandStack.pop() ? 1L : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GT_U:
                     operandStack.push(
-                            Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) < 0 ? 1
+                            Long.compareUnsigned(operandStack.pop(), operandStack.pop()) < 0 ? 1L
                                     : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LE_S:
-                    operandStack.push(operandStack.pop() >= operandStack.pop() ? 1 : 0);
+                    operandStack.push(operandStack.pop() >= operandStack.pop() ? 1L : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LE_U:
                     operandStack.push(
-                            Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) >= 0 ? 1
+                            Long.compareUnsigned(operandStack.pop(), operandStack.pop()) >= 0 ? 1L
                                     : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GE_S:
-                    operandStack.push(operandStack.pop() <= operandStack.pop() ? 1 : 0);
+                    operandStack.push(operandStack.pop() <= operandStack.pop() ? 1L : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GE_U:
                     operandStack.push(
-                            Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) <= 0 ? 1
+                            Long.compareUnsigned(operandStack.pop(), operandStack.pop()) <= 0 ? 1L
                                     : 0);
                     break;
 
@@ -179,21 +176,21 @@ public class WASMInterpreter {
                  * Unary instructions
                  *****************************/
                 case BinaryFormat.Instructions.Numeric.I32_CLZ:
-                    operandStack.push(Integer.numberOfLeadingZeros(operandStack.pop()));
+                    operandStack.push((long)Long.numberOfLeadingZeros(operandStack.pop()));
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_CTZ:
-                    operandStack.push(Integer.numberOfTrailingZeros(operandStack.pop()));
+                    operandStack.push((long)Long.numberOfTrailingZeros(operandStack.pop()));
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_POPCNT:
-                    operandStack.push(Integer.bitCount(operandStack.pop()));
+                    operandStack.push((long)Long.bitCount(operandStack.pop()));
                     break;
 
                 /*********************************
                  * Arithmetic instructions
                  *********************************/
                 case BinaryFormat.Instructions.Numeric.I32_ADD:
-                    int secondOperand = operandStack.pop();
-                    int firstOperand = operandStack.pop();
+                    long secondOperand = operandStack.pop();
+                    long firstOperand = operandStack.pop();
                     operandStack.push(firstOperand + secondOperand);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_SUB:
@@ -253,10 +250,10 @@ public class WASMInterpreter {
                     operandStack.push(operandStack.pop() >>> operandStack.pop());
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_ROTL:
-                    operandStack.push(Integer.rotateLeft(operandStack.pop(), operandStack.pop()));
+                    //operandStack.push(Long.rotateLeft(operandStack.pop(), operandStack.pop()));
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_ROTR:
-                    operandStack.push(Integer.rotateRight(operandStack.pop(), operandStack.pop()));
+                    //operandStack.push(Long.rotateRight(operandStack.pop(), operandStack.pop()));
                     break;
 
                 /******************************
@@ -299,7 +296,7 @@ public class WASMInterpreter {
 
                     // Push the new function with its parameters to the call stack
                     callStack.push(new CallStackFrame(calledFunction,
-                            new int[calledFunction.getLocalVariableCount() + calledFunction.getParameterCount()]));
+                            new long[calledFunction.getLocalVariableCount() + calledFunction.getParameterCount()]));
                     for (int i = calledFunction.getParameterCount() - 1; i >= 0; i--) {
                         callStack.peek().setLocalVariableByIndex(operandStack.pop(), i);
                     }

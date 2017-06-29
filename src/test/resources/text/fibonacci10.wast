@@ -5,7 +5,7 @@
     get_local 0
     i32.const 3
     i32.lt_s
-    if (result i32)
+    if i32
       i32.const 1
       return
     else
@@ -17,6 +17,7 @@
       i32.const 1
       i32.sub
       call 0
+      i32.add
       return
     end)
   (func (;1;) (type 1)

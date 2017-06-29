@@ -9,7 +9,7 @@ import java.util.Stack;
 public class CallStackFrame {
 
     private final Function function;
-    private final int[] localVariables;
+    private final long[] localVariables;
 
     private long instructionPointer = 0;
 
@@ -20,7 +20,7 @@ public class CallStackFrame {
 
     private final Stack<EndValue> endStack = new Stack<>();
 
-    public CallStackFrame(Function function, int[] localVariables) {
+    public CallStackFrame(Function function, long[] localVariables) {
         this.function = function;
         this.localVariables = localVariables;
     }
@@ -29,15 +29,15 @@ public class CallStackFrame {
         return function;
     }
 
-    public int[] getLocalVariables() {
+    public long[] getLocalVariables() {
         return localVariables;
     }
 
-    public int getLocalVariableByIndex(int index) {
+    public long getLocalVariableByIndex(int index) {
         return localVariables[index];
     }
 
-    public void setLocalVariableByIndex(int value, int index) {
+    public void setLocalVariableByIndex(long value, int index) {
         localVariables[index] = value;
     }
 
