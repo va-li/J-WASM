@@ -6,18 +6,21 @@ package environment;
  */
 public class Function {
 
-    private final long firstInstructionLine;
+    private final byte[] instructions;
     private final int parameterCount;
     private final int returnValueCount;
+    private final int localVariableCount;
 
-    public Function(long firstInstructionLine, int parameterCount, int returnValueCount) {
-        this.firstInstructionLine = firstInstructionLine;
+    public Function(byte[] instructions, int parameterCount, int returnValueCount,
+        int localVariableCount) {
+        this.instructions = instructions;
         this.parameterCount = parameterCount;
         this.returnValueCount = returnValueCount;
+        this.localVariableCount = localVariableCount;
     }
 
-    public long getFirstInstructionLine() {
-        return firstInstructionLine;
+    public byte[] getInstructions() {
+        return instructions;
     }
 
     public int getParameterCount() {
@@ -26,5 +29,9 @@ public class Function {
 
     public int getReturnValueCount() {
         return returnValueCount;
+    }
+
+    public int getLocalVariableCount() {
+        return localVariableCount;
     }
 }
