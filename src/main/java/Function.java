@@ -5,18 +5,24 @@
 public class Function {
 
     private final long firstInstructionLine;
-    private final int argumentCount;
+    private final int parameterCount;
+    private final int returnValueCount;
 
-    public Function(long firstInstructionLine, int argumentCount) {
+    public Function(long firstInstructionLine, int parameterCount, int returnValueCount) {
         this.firstInstructionLine = firstInstructionLine;
-        this.argumentCount = argumentCount;
+        this.parameterCount = parameterCount;
+        this.returnValueCount = returnValueCount;
     }
 
     public long getFirstInstructionLine() {
         return firstInstructionLine;
     }
 
-    public int getArgumentCount() {
-        return argumentCount;
+    public int getParameterCount() {
+        return parameterCount;
+    }
+
+    public int getReturnValueCount() {
+        return returnValueCount;
     }
 }
