@@ -37,7 +37,7 @@ public class WASMInterpreter {
 
         // Push the parameters to the stack
         callStack.push(new CallStackFrame(executingFunction,
-            new int[executingFunction.getLocalVariableCount() + executingFunction.getParameterCount()]));
+                new int[executingFunction.getLocalVariableCount() + executingFunction.getParameterCount()]));
 
         for (int i = 0; i < parameters.length; i++) {
             int parameter = parameters[i];
@@ -57,14 +57,17 @@ public class WASMInterpreter {
                 //when we see another block thing throw it into our stack
                 if (BinaryFormat.Instructions.Control.IF == opCode) {
                     stackFrame.getEndStack().push(CallStackFrame.EndValue.IF);
+                    instructionPointer++;
                     continue;
                 }
                 if (BinaryFormat.Instructions.Control.BLOCK == opCode) {
                     stackFrame.getEndStack().push(CallStackFrame.EndValue.BLOCK);
+                    instructionPointer++;
                     continue;
                 }
                 if (BinaryFormat.Instructions.Control.LOOP == opCode) {
                     stackFrame.getEndStack().push(CallStackFrame.EndValue.LOOP);
+                    instructionPointer++;
                     continue;
                 }
 
@@ -73,6 +76,7 @@ public class WASMInterpreter {
                     if (stackFrame.getEndStack().size() == stackFrame.getIfDepth()) {
                         if (BinaryFormat.Instructions.Control.ELSE == opCode) {
                             stackFrame.setSkipCode(false);
+                            instructionPointer++;
                             continue;
                         }
                     }
@@ -82,6 +86,7 @@ public class WASMInterpreter {
                             stackFrame.setSkipCode(false);
                             stackFrame.getEndStack().pop();
                             stackFrame.setIfDepth(stackFrame.getIfDepth() - 1);
+                            instructionPointer++;
                             continue;
                         }
                     }
@@ -89,6 +94,7 @@ public class WASMInterpreter {
                 if (BinaryFormat.Instructions.Control.END == opCode) {
                     stackFrame.getEndStack().pop();
                 }
+                instructionPointer++;
                 continue;
             }
 
