@@ -36,6 +36,9 @@ public class WASMInterpreter {
         Stack<Integer> operandStack = new Stack<>();
 
         // Push the parameters to the stack
+        callStack.push(new CallStackFrame(executingFunction,
+            new int[executingFunction.getLocalVariableCount()]));
+
         for (int i = 0; i < parameters.length; i++) {
             int parameter = parameters[i];
             callStack.peek().setLocalVariableByIndex(parameter, i);
@@ -44,8 +47,6 @@ public class WASMInterpreter {
         ByteArrayInputStream executingCodeStream =
                 new ByteArrayInputStream(executingFunction.getInstructions());
 
-        callStack.push(new CallStackFrame(executingFunction,
-                new int[executingFunction.getLocalVariableCount()]));
 
         while (executingCodeStream.available() != 0) {
             byte opCode = (byte) executingCodeStream.read();
@@ -272,7 +273,7 @@ public class WASMInterpreter {
                     // Push the new function with its parameters to the call stack
                     callStack.push(new CallStackFrame(calledFunction,
                             new int[calledFunction.getLocalVariableCount()]));
-                    for (int i = calledFunction.getParameterCount() - 1; i > 0; i--) {
+                    for (int i = calledFunction.getParameterCount() - 1; i >= 0; i--) {
                         callStack.peek().setLocalVariableByIndex(operandStack.pop(), i);
                     }
 
@@ -298,6 +299,7 @@ public class WASMInterpreter {
                         if (operandStack.size() != 0) {
                             throw new ParserException("Start function must not return anything!");
                         }
+                        System.out.println("Result");
                         return;
                     } else {
                         // Return to the previous function context
