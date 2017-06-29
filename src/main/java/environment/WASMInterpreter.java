@@ -61,37 +61,37 @@ public class WASMInterpreter {
                  * Test instructions
                  *****************************/
                 case BinaryFormat.Instructions.Numeric.I32_EQZ:
-                    f.addInstruction(new I32Eqz(helpStack.pop()));
+                    operandStack.push(operandStack.pop() == 0 ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_EQ:
-                    f.addInstruction(new I32Eq(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(operandStack.pop().equals(operandStack.pop()) ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_NE:
-                    f.addInstruction(new I32Ne(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(!operandStack.pop().equals(operandStack.pop()) ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LT_S:
-                    f.addInstruction(new I32LtS(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(operandStack.pop() > operandStack.pop() ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LT_U:
-                    f.addInstruction(new I32LtU(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) > 0 ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GT_S:
-                    f.addInstruction(new I32GtS(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(operandStack.pop() < operandStack.pop() ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GT_U:
-                    f.addInstruction(new I32GtU(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) < 0 ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LE_S:
-                    f.addInstruction(new I32LeS(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(operandStack.pop() >= operandStack.pop() ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LE_U:
-                    f.addInstruction(new I32LeU(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) >= 0 ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GE_S:
-                    f.addInstruction(new I32GeS(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(operandStack.pop() <= operandStack.pop() ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GE_U:
-                    f.addInstruction(new I32GeU(helpStack.pop(), helpStack.pop()));
+                    operandStack.push(Integer.compareUnsigned(operandStack.pop(), operandStack.pop()) <= 0 ? 1 : 0);
                     break;
 
                 /*****************************
