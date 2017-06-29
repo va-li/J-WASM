@@ -18,7 +18,7 @@
       return
     end)
   (func (;1;) (type 1)
-    i32.const 30
+    i32.const 20
     call 0
     drop)
   (memory (;0;) 64 64)
