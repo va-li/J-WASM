@@ -16,7 +16,7 @@ public class CallStackFrame {
     private int ifDepth = 0;
     private int operandStackBase = 0;
     private boolean ifBranch = true;
-    private boolean skipCode = true;
+    private boolean skipCode = false;
 
     private final Stack<EndValue> endStack = new Stack<>();
 

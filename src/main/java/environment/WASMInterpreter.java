@@ -85,6 +85,9 @@ public class WASMInterpreter {
                         }
                     }
                 }
+                if (BinaryFormat.Instructions.Control.END == opCode) {
+                    stackFrame.getEndStack().pop();
+                }
                 continue;
             }
 
