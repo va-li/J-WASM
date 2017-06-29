@@ -1,13 +1,15 @@
 package environment;
 
+import static util.Leb128.readUnsignedLeb128;
+
 import constants.BinaryFormat;
 import parser.ParserException;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Stack;
-
-import static util.Leb128.readUnsignedLeb128;
+import util.Leb128;
 
 /**
  * Created by Valentin
@@ -25,11 +27,17 @@ public class WASMInterpreter {
         this.startFunctionIndex = startFunctionIndex;
     }
 
-    public void execute() {
+    public void execute(int[] parameters) {
         // Set up the local variables and both stacks
         Function executingFunction = functions.get(startFunctionIndex);
         Stack<CallStackFrame> callStack = new Stack<>();
         Stack<Integer> operandStack = new Stack<>();
+
+        // Push the parameters to the stack
+        for (int i = 0; i < parameters.length; i++) {
+            int parameter = parameters[i];
+            callStack.peek().setLocalVariableByIndex(parameter, i);
+        }
 
         ByteArrayInputStream executingCodeStream =
                 new ByteArrayInputStream(executingFunction.getInstructions());
@@ -188,9 +196,22 @@ public class WASMInterpreter {
                     if()
                     break;
                 case BinaryFormat.Instructions.Control.CALL:
-                    int funIndex = is.read();
-                    //TODO: Implement Parameters
-                    f.addInstruction(FunctionCallBuilder.getI32FunctionCall(module.getFunction(funIndex).getReturnType(), funIndex, null));
+                    int calledFunctionIndex = Leb128.readUnsignedLeb128(executingCodeStream);
+                    Function calledFunction = functions.get(calledFunctionIndex);
+
+                    // Set the return address for the current function
+                    instructionPointer++;
+                    callStack.peek().setInstructionPointer(instructionPointer);
+
+                    // Push the new function with its parameters to the call stack
+                    callStack.push(new CallStackFrame(calledFunction, new int[calledFunction.getLocalVariableCount()], 0));
+                    for (int i = calledFunction.getParameterCount() - 1; i > 0; i--) {
+                        callStack.peek().setLocalVariableByIndex(operandStack.pop(), i);
+                    }
+
+                    // Set the new code and instruction pointer
+                    executingCodeStream = new ByteArrayInputStream(calledFunction.getInstructions());
+                    instructionPointer = callStack.peek().getInstructionPointer();
                     break;
 
                 case BinaryFormat.Instructions.Control.RETURN:
