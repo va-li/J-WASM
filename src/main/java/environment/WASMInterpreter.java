@@ -306,20 +306,17 @@ public class WASMInterpreter {
 
                 case BinaryFormat.Instructions.Control.RETURN:
                     /***** Function return *****/
-                    int expectedReturnValueCount = callStack.peek().getFunction()
-                            .getReturnValueCount();
-                    int actualReturnValueCount = operandStack.size() - callStack.peek().getOperandStackBase();
-
-                    if (expectedReturnValueCount != actualReturnValueCount) {
-                        throw new ParserException("Wrong number of return values! Expected: " +
-                                expectedReturnValueCount + ", actual: " + actualReturnValueCount);
-                    }
 
                     if (callStack.size() == 1) {
-                        // Exit execution
-                        if (operandStack.size() != 0) {
-                            throw new ParserException("Start function must not return anything!");
+                        int expectedReturnValueCount = callStack.peek().getFunction()
+                            .getReturnValueCount();
+                        int actualReturnValueCount = operandStack.size() - callStack.peek().getOperandStackBase();
+
+                        if (expectedReturnValueCount != actualReturnValueCount) {
+                            throw new ParserException("Wrong number of return values! Expected: " +
+                                expectedReturnValueCount + ", actual: " + actualReturnValueCount);
                         }
+                        // Exit execution
                         System.out.println("Result");
                         return;
                     } else {
