@@ -108,7 +108,10 @@ public class BinaryParser implements Parser {
             //body size guess for skipping purpose
             int bodySizeGuess = is.read();
 
-            byte[] funcBody = new byte[bodySizeGuess];
+            int localVarCount = readUnsignedLeb128(is);
+            this.functions.get(currFun).setLocalVariableCount(localVarCount);
+
+            byte[] funcBody = new byte[bodySizeGuess - unsignedLeb128Size(localVarCount)];
             is.read(funcBody);
             this.functions.get(currFun).setInstructions(funcBody);
 
@@ -234,5 +237,23 @@ public class BinaryParser implements Parser {
         }
 
         return result;
+    }
+
+    /**
+     * Gets the number of bytes in the unsigned LEB128 encoding of the
+     * given value.
+     *
+     * @param value the value in question
+     * @return its write size, in bytes
+     */
+    public static int unsignedLeb128Size(int value) {
+        // TODO: This could be much cleverer.
+        int remaining = value >> 7;
+        int count = 0;
+        while (remaining != 0) {
+            remaining >>= 7;
+            count++;
+        }
+        return count + 1;
     }
 }
