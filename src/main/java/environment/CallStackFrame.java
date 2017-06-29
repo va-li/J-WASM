@@ -13,7 +13,6 @@ public class CallStackFrame {
 
     private long instructionPointer = 0;
 
-    private int depth = 0;
     private int ifDepth = 0;
     private int operandStackBase = 0;
     private boolean ifBranch = true;
@@ -48,14 +47,6 @@ public class CallStackFrame {
 
     public void setInstructionPointer(long instructionPointer) {
         this.instructionPointer = instructionPointer;
-    }
-
-    public int getDepth() {
-        return depth;
-    }
-
-    public void setDepth(int depth) {
-        this.depth = depth;
     }
 
     public int getIfDepth() {

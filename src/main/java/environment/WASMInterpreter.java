@@ -238,7 +238,7 @@ public class WASMInterpreter {
                     //NO-OP
                     break;
                 case BinaryFormat.Instructions.Control.BLOCK:
-                    stackFrame.setDepth(stackFrame.getDepth() + 1);
+                    stackFrame.getEndStack().push(CallStackFrame.EndValue.BLOCK);
                     break;
                 case BinaryFormat.Instructions.Control.LOOP:
                     //TODO: Wait for loop instruction
