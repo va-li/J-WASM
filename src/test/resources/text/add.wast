@@ -11,6 +11,7 @@
       i32.const 1
       i32.add
       return
+    else
     end)
   (func (;1;) (type 1)
     i32.const 1
