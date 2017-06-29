@@ -3,6 +3,7 @@ package environment;
 import static util.Leb128.readUnsignedLeb128;
 
 import constants.BinaryFormat;
+import parser.Parser;
 import parser.ParserException;
 
 import java.io.ByteArrayInputStream;
@@ -62,7 +63,7 @@ public class WASMInterpreter {
                     break;
                 case BinaryFormat.Instructions.Variable.GET_LOCAL:
                     parameter = readUnsignedLeb128(executingCodeStream);
-                    callStack.peek().getLocalVariableByIndex(parameter);
+                    operandStack.push(callStack.peek().getLocalVariableByIndex(parameter));
                     instructionPointer += Leb128.unsignedLeb128Size(parameter);
                     break;
                 case BinaryFormat.Instructions.Variable.SET_LOCAL:
@@ -205,6 +206,7 @@ public class WASMInterpreter {
                     this.ifExpression = operandStack.pop() != 0;
                     break;
                 case BinaryFormat.Instructions.Control.CALL:
+                    /***** Function call *****/
                     int calledFunctionIndex = Leb128.readUnsignedLeb128(executingCodeStream);
                     instructionPointer += Leb128.unsignedLeb128Size(calledFunctionIndex);
                     Function calledFunction = functions.get(calledFunctionIndex);
@@ -225,12 +227,26 @@ public class WASMInterpreter {
                     break;
 
                 case BinaryFormat.Instructions.Control.RETURN:
-                    int actualReturnValueCount = operandStack.size();
+                    /***** Function return *****/
                     int expectedReturnValueCount = callStack.peek().getFunction().getReturnValueCount();
+                    int actualReturnValueCount = operandStack.size() - operandStackBase;
 
-                    if (actualReturnValueCount > expectedReturnValueCount) {
-                        throw new RuntimeException("Wrong number of return values! Expected: " +
+                    if (expectedReturnValueCount != actualReturnValueCount) {
+                        throw new ParserException("Wrong number of return values! Expected: " +
                         expectedReturnValueCount + ", actual: " + actualReturnValueCount);
+                    }
+
+
+                    if (callStack.size() == 1) {
+                        // Exit execution
+                        if (operandStack.size() != 0) {
+                            throw new ParserException("Start function must not return anything!");
+                        }
+                        return;
+                    } else {
+                        // Return to the previous function context
+                        callStack.pop();
+                        instructionPointer = callStack.peek().getInstructionPointer();
                     }
                     break;
                 case BinaryFormat.Instructions.Control.END:
@@ -239,7 +255,7 @@ public class WASMInterpreter {
                 case -1:
                     throw new ParserException("Unexpected end of file! @code 0x10 body");
                 default:
-                    throw new ParserException("Invalid (or not implemented instrcution) instruction!");
+                    throw new ParserException("Invalid (or not implemented) instruction!");
             }
         }
     }
