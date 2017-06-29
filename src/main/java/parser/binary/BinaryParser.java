@@ -177,7 +177,6 @@ public class BinaryParser implements Parser {
         //number of type (seems like the function header count?)
         int numTypes = is.read();
 
-
         //iterate through all the function headers
         while (numTypes > 0) {
             if (is.read() != BinaryFormat.Types.FUNCTION_TYPE) {
@@ -185,7 +184,7 @@ public class BinaryParser implements Parser {
             }
             //number of parameters of the function
             int numParams = is.read();
-
+            int numParamsP = numParams;
             while (numParams > 0) {
                 //add the parameters to a list, which will be passed to a function object
                 switch ((byte) is.read()) {
@@ -201,6 +200,8 @@ public class BinaryParser implements Parser {
             //this is not a list because multiple return values are not currently supported!
 
             int numResults = is.read();
+            int numResultsP = numResults;
+
             while (numResults > 0) {
                 //add results to a list, which will be passed to a function object
                 switch ((byte) is.read()) {
@@ -213,7 +214,7 @@ public class BinaryParser implements Parser {
                 numResults--;
             }
 
-            this.functions.add(new Function(numParams, numResults));
+            this.functions.add(new Function(numParamsP, numResultsP));
             numTypes--;
         }
     }
