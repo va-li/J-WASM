@@ -1,28 +1,13 @@
 package parser.binary;
 
-import ast.Function;
-import ast.Module;
-import ast.ValueType;
-import ast.instructions.controls.IfThenElseInstr;
-import ast.instructions.controls.NoOperationInstr;
-import ast.instructions.controls.UnreachableInstr;
-import ast.instructions.expressions.AbstractExpression;
-import ast.instructions.expressions.call.FunctionCall;
-import ast.instructions.expressions.call.FunctionCallBuilder;
-import ast.instructions.expressions.constants.I32Const;
-import ast.instructions.expressions.operators.binary.*;
-import ast.instructions.expressions.operators.relational.*;
-import ast.instructions.expressions.operators.test.I32Eqz;
-import ast.instructions.expressions.operators.unary.I32Clz;
-import ast.instructions.expressions.operators.unary.I32Ctz;
-import ast.instructions.expressions.operators.unary.I32Popcnt;
-import ast.instructions.expressions.variables.I32GetLocal;
 import constants.BinaryFormat;
+import environment.Function;
+import environment.WASMInterpreter;
 import parser.Parser;
 import parser.ParserException;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -30,13 +15,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Stack;
 
 public class BinaryParser implements Parser {
 
     private int currSection = -0x01;
-    private byte[] code;
-
+    //private byte[] code;
+    private List<Function> functions = new ArrayList<>();
+    private int startFunctionIndex = -1;
 
     public static void main(String[] args) throws IOException {
         Parser p = new BinaryParser();
@@ -48,8 +33,9 @@ public class BinaryParser implements Parser {
 
     public void parse(File file) throws IOException, ParserException {
 
-        this.code = Files.readAllBytes(Paths.get(file.toURI()));
+        byte[] code = Files.readAllBytes(Paths.get(file.toURI()));
 
+        ByteArrayInputStream is = new ByteArrayInputStream(code);
 
         //test if the file has a correct header
         byte helper[] = new byte[4];
@@ -107,6 +93,7 @@ public class BinaryParser implements Parser {
                     throw new ParserException("Not a valid section type");
             }
         }
+        new WASMInterpreter(this.functions, this.startFunctionIndex).execute();
     }
 
     private void readCodeSection(final InputStream is)
@@ -121,183 +108,13 @@ public class BinaryParser implements Parser {
             //body size guess for skipping purpose
             int bodySizeGuess = is.read();
 
-            //???
-            int localDeclCount = is.read();
+            byte[] funcBody = new byte[bodySizeGuess];
+            this.functions.get(currFun).setInstructions(funcBody);
 
             //we need to start at index 0 and inc with each loop
             currFun++;
 
-            int instruction = is.read();
-            while (instruction != BinaryFormat.Instructions.Control.END) {
-                switch (instruction) {
-                    /***************************
-                     * Variable and constant access instructions
-                     ****************************/
-                    case BinaryFormat.Instructions.Numeric.I32_CONST:
-                        //the int is LEB128 encoded, so read it and then add the operation
-                        helpStack.push(new I32Const(readUnsignedLeb128(is)));
-                        break;
-                    case BinaryFormat.Instructions.Variable.GET_LOCAL:
-                        helpStack.push(new I32GetLocal(is.read()));
-                        break;
-                    case BinaryFormat.Instructions.Variable.SET_LOCAL:
-                        //TODO
-                        break;
-                    case BinaryFormat.Instructions.Variable.TEE_LOCAL:
-                        //TODO
-                        break;
 
-                    /*****************************
-                     * Test instructions
-                     *****************************/
-                    case BinaryFormat.Instructions.Numeric.I32_EQZ:
-                        f.addInstruction(new I32Eqz(helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_EQ:
-                        f.addInstruction(new I32Eq(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_NE:
-                        f.addInstruction(new I32Ne(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_LT_S:
-                        f.addInstruction(new I32LtS(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_LT_U:
-                        f.addInstruction(new I32LtU(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_GT_S:
-                        f.addInstruction(new I32GtS(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_GT_U:
-                        f.addInstruction(new I32GtU(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_LE_S:
-                        f.addInstruction(new I32LeS(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_LE_U:
-                        f.addInstruction(new I32LeU(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_GE_S:
-                        f.addInstruction(new I32GeS(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_GE_U:
-                        f.addInstruction(new I32GeU(helpStack.pop(), helpStack.pop()));
-                        break;
-
-                    /*****************************
-                     * Unary instructions
-                     *****************************/
-                    case BinaryFormat.Instructions.Numeric.I32_CLZ:
-                        f.addInstruction(new I32Clz(helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_CTZ:
-                        f.addInstruction(new I32Ctz(helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_POPCNT:
-                        f.addInstruction(new I32Popcnt(helpStack.pop()));
-                        break;
-
-
-                    /*********************************
-                     * Arithmetic instructions
-                     *********************************/
-                    case BinaryFormat.Instructions.Numeric.I32_ADD:
-                        f.addInstruction(new I32Add(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_SUB:
-                        f.addInstruction(new I32Sub(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_MUL:
-                        f.addInstruction(new I32Mul(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_DIV_S:
-                        f.addInstruction(new I32DivS(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_DIV_U:
-                        f.addInstruction(new I32DivU(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_REM_S:
-                        f.addInstruction(new I32RemS(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_REM_U:
-                        f.addInstruction(new I32RemU(helpStack.pop(), helpStack.pop()));
-                        break;
-
-                    /*********************************
-                     * Logical instructions
-                     *********************************/
-                    case BinaryFormat.Instructions.Numeric.I32_AND:
-                        f.addInstruction(new I32And(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_OR:
-                        f.addInstruction(new I32Or(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_XOR:
-                        f.addInstruction(new I32XOr(helpStack.pop(), helpStack.pop()));
-                        break;
-
-                    /*********************************
-                     * Bitwise instructions
-                     *********************************/
-                    case BinaryFormat.Instructions.Numeric.I32_SHL:
-                        f.addInstruction(new I32Shl(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_SHR_S:
-                        f.addInstruction(new I32ShrS(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_SHR_U:
-                        f.addInstruction(new I32ShrU(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_ROTL:
-                        f.addInstruction(new I32Rotl(helpStack.pop(), helpStack.pop()));
-                        break;
-                    case BinaryFormat.Instructions.Numeric.I32_ROTR:
-                        f.addInstruction(new I32Rotr(helpStack.pop(), helpStack.pop()));
-                        break;
-
-
-                    /******************************
-                     * Control instructions
-                     *****************************/
-                    case BinaryFormat.Instructions.Control.UNREACHABLE:
-                        f.addInstruction(new UnreachableInstr());
-                        break;
-                    case BinaryFormat.Instructions.Control.NOP:
-                        f.addInstruction(new NoOperationInstr());
-                        break;
-                    case BinaryFormat.Instructions.Control.BLOCK:
-                        //TODO: I don't think we'll implement this
-                        break;
-                    case BinaryFormat.Instructions.Control.LOOP:
-                        //TODO: Wait for loop instruction
-                        break;
-                    case BinaryFormat.Instructions.Control.IF:
-                        int instr = is.read();
-                        while (instr != BinaryFormat.Instructions.Control.ELSE) {
-                            switch (instr) {
-                                case -1:
-                                    throw new ParserException("Unexpected end of file! @If then else");
-                            }
-                        }
-                        //f.addInstruction();
-                        break;
-                    case BinaryFormat.Instructions.Control.CALL:
-                        int funIndex = is.read();
-                        //TODO: Implement Parameters
-                        f.addInstruction(FunctionCallBuilder.getI32FunctionCall(module.getFunction(funIndex).getReturnType(), funIndex, null));
-                        break;
-
-                    case BinaryFormat.Instructions.Control.RETURN:
-                        //TODO: evaluate HOW
-                        break;
-                        case
-                    case -1:
-                        throw new ParserException("Unexpected end of file! @code 0x10 body");
-                    default:
-                        throw new ParserException("Invalid (or not implemented instrcution) instruction!");
-                }
-                instruction = is.read();
-            }
             numFun--;
         }
     }
@@ -308,7 +125,7 @@ public class BinaryParser implements Parser {
         int sectionSizeGuess = is.read();
 
         //set the index of the start function in the module
-        int startFunIdx = is.read();
+        this.startFunctionIndex = is.read();
     }
 
     private void readMemorySection(final InputStream is)
@@ -341,7 +158,6 @@ public class BinaryParser implements Parser {
 
         while (numFun > 0) {
 
-            //TODO: don't think we need this?
             int signatureIndex = is.read();
 
             numFun--;
@@ -355,6 +171,7 @@ public class BinaryParser implements Parser {
         //number of type (seems like the function header count?)
         int numTypes = is.read();
 
+
         //iterate through all the function headers
         while (numTypes > 0) {
             if (is.read() != BinaryFormat.Types.FUNCTION_TYPE) {
@@ -367,7 +184,7 @@ public class BinaryParser implements Parser {
                 //add the parameters to a list, which will be passed to a function object
                 switch ((byte) is.read()) {
                     case BinaryFormat.Types.ValueType.I32:
-                        //TODO: do smth with valueType
+
                         break;
                     default:
                         throw new ParserException("Invalid parameter type at function header!");
@@ -390,6 +207,7 @@ public class BinaryParser implements Parser {
                 numResults--;
             }
 
+            this.functions.add(new Function(numParams, numResults));
             numTypes--;
         }
     }

@@ -11,6 +11,11 @@ public class Function {
     private int returnValueCount;
     private int localVariableCount;
 
+    public Function(int parameterCount, int returnValueCount) {
+        this.parameterCount = parameterCount;
+        this.returnValueCount = returnValueCount;
+    }
+
     public byte[] getInstructions() {
         return instructions;
     }
