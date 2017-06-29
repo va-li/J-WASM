@@ -1,5 +1,7 @@
 package parser.binary;
 
+import static util.Leb128.readUnsignedLeb128;
+
 import constants.BinaryFormat;
 import environment.Function;
 import environment.WASMInterpreter;
@@ -216,28 +218,7 @@ public class BinaryParser implements Parser {
         }
     }
 
-    /**
-     * Reads an unsigned integer from {@code in}.
-     * Thank you android dex for the source!
-     * https://github.com/facebook/buck/blob/master/third-party/java/dx/src/com/android/dex/Leb128.java
-     */
-    private int readUnsignedLeb128(InputStream in) throws IOException {
-        int result = 0;
-        int cur;
-        int count = 0;
 
-        do {
-            cur = in.read() & 0xff;
-            result |= (cur & 0x7f) << (count * 7);
-            count++;
-        } while (((cur & 0x80) == 0x80) && count < 5);
-
-        if ((cur & 0x80) == 0x80) {
-            throw new ParserException("invalid LEB128 sequence");
-        }
-
-        return result;
-    }
 
     /**
      * Gets the number of bytes in the unsigned LEB128 encoding of the
