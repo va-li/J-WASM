@@ -27,7 +27,7 @@ public class BinaryParser implements Parser {
 
     public static void main(String[] args) throws IOException {
         Parser p = new BinaryParser();
-        p.parse(new File("wabt_tests/test.wasm"));
+        p.parse(new File("wabt_tests/factorial1.wasm"));
 
         //for breakpoint purpose
         int i = 1;
