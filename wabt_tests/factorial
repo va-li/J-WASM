@@ -16,8 +16,8 @@
       i32.mul
       return
   end)
-  (func $main
-    i32.const 4
+  (func $main (param i32)
+    get_local 0
     call 0
     drop
   )
