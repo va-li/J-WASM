@@ -4,7 +4,7 @@
     get_local 0
     i32.const 0
     i32.eq
-    if
+    if i32
       i32.const 1
       return
     else

@@ -51,6 +51,35 @@ public class WASMInterpreter {
             byte opCode = (byte) executingCodeStream.read();
             int parameter;
 
+            CallStackFrame stackFrame = callStack.peek();
+            if (stackFrame.isSkipCode()) {
+                //when we see another block thing increment depth
+                if (BinaryFormat.Instructions.Control.IF == opCode ||
+                        BinaryFormat.Instructions.Control.BLOCK == opCode ||
+                        BinaryFormat.Instructions.Control.LOOP == opCode) {
+                    stackFrame.setDepth(stackFrame.getDepth() + 1);
+                    continue;
+                }
+                if (!stackFrame.isIfBranch()) { //skipCode && else
+                    if (stackFrame.getDepth() == stackFrame.getIfDepth()) {
+                        if (BinaryFormat.Instructions.Control.ELSE == opCode) {
+                            stackFrame.setSkipCode(false);
+                            continue;
+                        }
+                    }
+                } else { //skipCode && if
+                    if (stackFrame.getIfDepth() == stackFrame.getDepth()) {
+                        if (BinaryFormat.Instructions.Control.END == opCode) {
+                            stackFrame.setSkipCode(false);
+                            stackFrame.setIfDepth(stackFrame.getIfDepth() - 1);
+                            stackFrame.setDepth(stackFrame.getDepth() - 1);
+                            continue;
+                        }
+                    }
+                }
+                continue;
+            }
+
             switch (opCode) {
                 /***************************
                  * Variable and constant access instructions
@@ -196,14 +225,19 @@ public class WASMInterpreter {
                     //NO-OP
                     break;
                 case BinaryFormat.Instructions.Control.BLOCK:
-                    //TODO: I don't think we'll implement this
+                    stackFrame.setDepth(stackFrame.getDepth() + 1);
                     break;
                 case BinaryFormat.Instructions.Control.LOOP:
                     //TODO: Wait for loop instruction
                     break;
                 case BinaryFormat.Instructions.Control.IF:
-                    this.ifLevel++;
-                    this.ifExpression = operandStack.pop() != 0;
+                    stackFrame.setDepth(stackFrame.getDepth() + 1);
+                    stackFrame.setIfDepth(stackFrame.getIfDepth() + 1);
+                    boolean ifExpression = operandStack.pop() != 0;
+                    stackFrame.setIfBranch(ifExpression);
+                    if (!ifExpression) { //we have else code here
+                        stackFrame.setSkipCode(true);
+                    }
                     break;
                 case BinaryFormat.Instructions.Control.CALL:
                     /***** Function call *****/
@@ -233,29 +267,34 @@ public class WASMInterpreter {
 
                     if (expectedReturnValueCount != actualReturnValueCount) {
                         throw new ParserException("Wrong number of return values! Expected: " +
-                        expectedReturnValueCount + ", actual: " + actualReturnValueCount);
-                    }
-
-
-                    if (callStack.size() == 1) {
-                        // Exit execution
-                        if (operandStack.size() != 0) {
-                            throw new ParserException("Start function must not return anything!");
+                                expectedReturnValueCount + ", actual: " + actualReturnValueCount);
+                        if (actualReturnValueCount > expectedReturnValueCount) {
+                            throw new RuntimeException("Wrong number of return values! Expected: " +
+                                    expectedReturnValueCount + ", actual: " + actualReturnValueCount);
                         }
-                        return;
-                    } else {
-                        // Return to the previous function context
-                        callStack.pop();
-                        instructionPointer = callStack.peek().getInstructionPointer();
+
+
+                        if (callStack.size() == 1) {
+                            // Exit execution
+                            if (operandStack.size() != 0) {
+                                throw new ParserException("Start function must not return anything!");
+                            }
+                            return;
+                        } else {
+                            // Return to the previous function context
+                            callStack.pop();
+                            instructionPointer = callStack.peek().getInstructionPointer();
+                        }
+                        break;
+                        case BinaryFormat.Instructions.Control.END:
+                            stackFrame.setDepth(stackFrame.getDepth() - 1);
+                            break;
+                        case -1:
+                            throw new ParserException("Unexpected end of file! @code 0x10 body");
+                        default:
+                            throw new ParserException("Invalid (or not implemented) instruction!");
+
                     }
-                    break;
-                case BinaryFormat.Instructions.Control.END:
-                    depth--;
-                    break;
-                case -1:
-                    throw new ParserException("Unexpected end of file! @code 0x10 body");
-                default:
-                    throw new ParserException("Invalid (or not implemented) instruction!");
             }
         }
     }
