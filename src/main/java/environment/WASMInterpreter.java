@@ -326,8 +326,11 @@ public class WASMInterpreter {
                     }
                     break;
                 case BinaryFormat.Instructions.Control.END:
-                    //TODO: check for loop
-                    stackFrame.getEndStack().pop();
+                    //This should be the final end of the execution
+                    System.out.println("Result: " + operandStack.pop());
+                    break;
+                case 0x1A: // drop
+                    //operandStack.pop();
                     break;
                 case -1:
                     throw new ParserException("Unexpected end of file! @code 0x10 body");
@@ -337,6 +340,5 @@ public class WASMInterpreter {
             }
             instructionPointer++;
         }
-        throw new ParserException("Unexpected end of execution");
     }
 }
