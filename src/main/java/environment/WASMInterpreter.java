@@ -186,25 +186,39 @@ public class WASMInterpreter {
                  * Arithmetic instructions
                  *********************************/
                 case BinaryFormat.Instructions.Numeric.I32_ADD:
-                    operandStack.push(operandStack.pop() + operandStack.pop());
+                    int secondOperand = operandStack.pop();
+                    int firstOperand = operandStack.pop();
+                    operandStack.push(firstOperand + secondOperand);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_SUB:
-                    operandStack.push(operandStack.pop() - operandStack.pop());
+                    secondOperand = operandStack.pop();
+                    firstOperand = operandStack.pop();
+                    operandStack.push(firstOperand - secondOperand);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_MUL:
-                    operandStack.push(operandStack.pop() * operandStack.pop());
+                    secondOperand = operandStack.pop();
+                    firstOperand = operandStack.pop();
+                    operandStack.push(firstOperand * secondOperand);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_DIV_S:
-                    operandStack.push(operandStack.pop() / operandStack.pop());
+                    secondOperand = operandStack.pop();
+                    firstOperand = operandStack.pop();
+                    operandStack.push(firstOperand / secondOperand);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_DIV_U:
-                    operandStack.push(Math.floorDiv(operandStack.pop(), operandStack.pop()));
+                    secondOperand = operandStack.pop();
+                    firstOperand = operandStack.pop();
+                    operandStack.push(Math.floorDiv(firstOperand, secondOperand));
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_REM_S:
-                    operandStack.push(operandStack.pop() % operandStack.pop());
+                    secondOperand = operandStack.pop();
+                    firstOperand = operandStack.pop();
+                    operandStack.push(firstOperand % secondOperand);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_REM_U:
-                    operandStack.push(Math.floorMod(operandStack.pop(), operandStack.pop()));
+                    secondOperand = operandStack.pop();
+                    firstOperand = operandStack.pop();
+                    operandStack.push(Math.floorMod(firstOperand, secondOperand));
                     break;
 
                 /*********************************
