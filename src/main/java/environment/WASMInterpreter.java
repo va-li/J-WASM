@@ -9,6 +9,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Stack;
+
 import util.Leb128;
 
 /**
@@ -193,7 +194,6 @@ public class WASMInterpreter {
                 case BinaryFormat.Instructions.Control.IF:
                     this.ifLevel++;
                     this.ifExpression = operandStack.pop() != 0;
-                    if()
                     break;
                 case BinaryFormat.Instructions.Control.CALL:
                     int calledFunctionIndex = Leb128.readUnsignedLeb128(executingCodeStream);
