@@ -7,9 +7,7 @@ package constants;
  */
 public final class BinaryFormat {
 
-    private BinaryFormat() {
-        assert false;
-    }
+    private BinaryFormat() {}
 
     /**
      * [WASM 5.5.15]
