@@ -3,6 +3,8 @@ package environment;
 import static util.Leb128.readUnsignedLeb128;
 
 import constants.BinaryFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import parser.ParserException;
 
 import java.io.ByteArrayInputStream;
@@ -18,19 +20,21 @@ import util.Leb128;
  */
 public class WASMInterpreter {
 
+    private static Logger LOG = LoggerFactory.getLogger(WASMInterpreter.class);
+
     private List<Function> functions;
-    private int startFunctionIndex;
 
     private long instructionPointer;
 
-    public WASMInterpreter(List<Function> functions, int startFunctionIndex) {
+    public WASMInterpreter(List<Function> functions) {
         this.functions = functions;
-        this.startFunctionIndex = startFunctionIndex;
     }
 
     public void execute(int[] parameters) {
+        LOG.debug("Starting execution...");
+
         // Set up the local variables and both stacks
-        Function executingFunction = functions.get(startFunctionIndex);
+        Function executingFunction = functions.get(functions.size() - 1);
         Stack<CallStackFrame> callStack = new Stack<>();
         Stack<Long> operandStack = new Stack<>();
 
@@ -92,7 +96,7 @@ public class WASMInterpreter {
                 }
                 if (BinaryFormat.Instructions.Control.END == opCode) {
                     if (stackFrame.getEndStack().size() == 0) {
-                        System.out.println(Arrays.toString(operandStack.toArray()));
+                        LOG.debug(Arrays.toString(operandStack.toArray()));
                         return;
                     }
                     stackFrame.getEndStack().pop();
@@ -330,7 +334,7 @@ public class WASMInterpreter {
                     break;
                 case BinaryFormat.Instructions.Control.END:
                     //This should be the final end of the execution
-                    System.out.println("Result: " + operandStack.pop());
+                    LOG.info("Output: " + operandStack.pop());
                     break;
                 case 0x1A: // drop
                     //operandStack.pop();

@@ -18,10 +18,9 @@ public class Benchmarker {
         long startTime = System.nanoTime();
         try {
             File f = new File("factorial.wasm");
-            int[] arguments = new int[0];
             for (int i = 0; i < BENCHMARK_ROUNDS_FACTORIAL; i++) {
                 BinaryParser factorialParser = new BinaryParser();
-                factorialParser.parse(f, arguments);
+                factorialParser.parse(f);
             }
         } catch (IOException e){
             e.printStackTrace();
@@ -31,10 +30,9 @@ public class Benchmarker {
         startTime = System.nanoTime();
         try {
             File f = new File("fibonacci.wasm");
-            int[] arguments = new int[0];
             for (int i = 0; i < BENCHMARK_ROUNDS_FIBONACCI; i++) {
                 BinaryParser fibonacciParser = new BinaryParser();
-                fibonacciParser.parse(f, arguments);
+                fibonacciParser.parse(f);
             }
         } catch (IOException e){
             e.printStackTrace();

@@ -5,8 +5,8 @@ import static util.Leb128.unsignedLeb128Size;
 
 import constants.BinaryFormat;
 import environment.Function;
-import environment.WASMInterpreter;
-import java.lang.reflect.Field;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import parser.Parser;
 import parser.ParserException;
 
@@ -21,36 +21,16 @@ import java.util.List;
 
 public class BinaryParser implements Parser {
 
+    private static Logger LOG = LoggerFactory.getLogger(BinaryParser.class);
+
     private int currSection = -0x01;
     //private byte[] code;
     private List<Function> functions = new ArrayList<>();
     private int startFunctionIndex = -1;
 
-    public static void main(String[] args) throws IOException {
-        if (args.length < 1) {
-            System.err.println("Usage: j-wasm <file-name.wasm> args*");
-        }
 
-        File exectuable = new File(args[0]);
-        int[] programArgument = new int[0];
-
-        if (args.length > 1) {
-            programArgument = new int[args.length - 1];
-
-            int argIdx = args.length - 1;
-            while (argIdx > 0) {
-                programArgument[argIdx] = Integer.parseInt(args[argIdx]);
-            }
-        }
-
-        Parser p = new BinaryParser();
-        p.parse(exectuable, programArgument);
-
-        //for breakpoint purpose
-        int i = 1;
-    }
-
-    public void parse(File file, int[] programArguments) throws IOException, ParserException {
+    public List<Function> parse(File file) throws IOException, ParserException {
+        LOG.debug("Starting parsing of file '{}'...", file.getName());
 
         byte[] code = Files.readAllBytes(Paths.get(file.toURI()));
 
@@ -112,7 +92,8 @@ public class BinaryParser implements Parser {
                     throw new ParserException("Not a valid section type");
             }
         }
-        new WASMInterpreter(this.functions, this.startFunctionIndex).execute(programArguments);
+
+        return this.functions;
     }
 
     private void readCodeSection(final ByteArrayInputStream is)
