@@ -5,6 +5,7 @@ import static util.Leb128.unsignedLeb128Size;
 
 import constants.BinaryFormat;
 import environment.Function;
+import environment.Module;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import parser.Parser;
@@ -29,7 +30,7 @@ public class BinaryParser implements Parser {
     private int startFunctionIndex = -1;
 
 
-    public List<Function> parse(File file) throws IOException, ParserException {
+    public Module parse(File file) throws IOException, ParserException {
         LOG.debug("Starting parsing of file '{}'...", file.getName());
 
         byte[] code = Files.readAllBytes(Paths.get(file.toURI()));
@@ -93,7 +94,7 @@ public class BinaryParser implements Parser {
             }
         }
 
-        return this.functions;
+        return new Module(-1, this.functions, startFunctionIndex);
     }
 
     private void readCodeSection(final ByteArrayInputStream is)

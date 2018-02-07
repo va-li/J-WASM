@@ -6,10 +6,10 @@ import java.util.Stack;
  * Created by Valentin
  * TODO documentation
  */
-public class CallStackFrame {
+public class ExecEnvFrame {
 
     private final Function function;
-    private final long[] localVariables;
+    private final Integer[] localVariables;
 
     private long instructionPointer = 0;
 
@@ -20,7 +20,7 @@ public class CallStackFrame {
 
     private final Stack<EndValue> endStack = new Stack<>();
 
-    public CallStackFrame(Function function, long[] localVariables) {
+    public ExecEnvFrame(Function function, Integer[] localVariables) {
         this.function = function;
         this.localVariables = localVariables;
     }
@@ -29,15 +29,15 @@ public class CallStackFrame {
         return function;
     }
 
-    public long[] getLocalVariables() {
+    public Integer[] getLocalVariables() {
         return localVariables;
     }
 
-    public long getLocalVariableByIndex(int index) {
+    public int getLocalVariableByIndex(int index) {
         return localVariables[index];
     }
 
-    public void setLocalVariableByIndex(long value, int index) {
+    public void setLocalVariableByIndex(int value, int index) {
         localVariables[index] = value;
     }
 
