@@ -10,8 +10,8 @@ public class Module {
     private List<Function>  functions;
     private int startFunctionIndex;
 
-    public Module(int initialLocalMemoryPageCount, List<Function> functions, int startFunctionIndex) {
-        this.linearMemory = new LinearMemory(initialLocalMemoryPageCount);
+    public Module(LinearMemory linearMemory, List<Function> functions, int startFunctionIndex) {
+        this.linearMemory = linearMemory;
         this.functions = functions;
         this.startFunctionIndex = startFunctionIndex;
     }
@@ -38,5 +38,9 @@ public class Module {
 
     public void setStartFunctionIndex(int startFunctionIndex) {
         this.startFunctionIndex = startFunctionIndex;
+    }
+
+    public Function getStartFunction() {
+        return functions.get(startFunctionIndex);
     }
 }

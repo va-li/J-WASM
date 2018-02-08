@@ -5,6 +5,7 @@ import static util.Leb128.unsignedLeb128Size;
 
 import constants.BinaryFormat;
 import environment.Function;
+import environment.LinearMemory;
 import environment.Module;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,7 +95,7 @@ public class BinaryParser implements Parser {
             }
         }
 
-        return new Module(-1, this.functions, startFunctionIndex);
+        return new Module(new LinearMemory(0), this.functions, startFunctionIndex);
     }
 
     private void readCodeSection(final ByteArrayInputStream is)

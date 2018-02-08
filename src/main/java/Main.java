@@ -1,5 +1,6 @@
 import com.sun.org.apache.bcel.internal.classfile.Unknown;
 import environment.Function;
+import environment.Module;
 import environment.WASMInterpreter;
 import java.io.File;
 import java.io.IOException;
@@ -49,11 +50,9 @@ public class Main {
                     }
                 }
 
-                List<Function> parsedExecutable = new BinaryParser()
-                    .parse(exectuable);
+                Module module = new BinaryParser().parse(exectuable);
 
-                new WASMInterpreter(parsedExecutable)
-                    .execute(programArguments);
+                new WASMInterpreter(module).execute(programArguments);
         }
     }
 

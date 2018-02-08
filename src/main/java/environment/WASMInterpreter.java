@@ -2,6 +2,7 @@ package environment;
 
 import static util.Leb128.readUnsignedLeb128;
 
+import com.sun.org.apache.xpath.internal.operations.Mod;
 import constants.BinaryFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,10 +29,9 @@ public class WASMInterpreter {
     private long instructionPointer;
 
     /**
-     * A list of functions to be interpreted and executed. The first (or "main") function to be executed is expected to
-     * be the last one in this list.
+     * The WebAssembly module to be interpreted and executed
      */
-    private List<Function> functions;
+    private Module module;
 
     /**
      * On the Call Stack the execution environment (instruction pointer, local variables, etc.) is saved, before a
@@ -45,8 +45,8 @@ public class WASMInterpreter {
      */
     private Stack<Integer> operandStack = new Stack<>();
 
-    public WASMInterpreter(List<Function> functions) {
-        this.functions = functions;
+    public WASMInterpreter(Module module) {
+        this.module = module;
     }
 
     public void step() {}
@@ -54,8 +54,7 @@ public class WASMInterpreter {
     public void execute(int[] parameters) {
         LOG.debug("Starting execution...");
 
-        // Set up the local variables and both stacks
-        Function executingFunction = functions.get(functions.size() - 1);
+        Function executingFunction = module.getStartFunction();
 
         // Push the parameters to the stack
         callStack.push(new ExecEnvFrame(executingFunction,
@@ -313,7 +312,7 @@ public class WASMInterpreter {
                     /***** Function call *****/
                     int calledFunctionIndex = Leb128.readUnsignedLeb128(executingCodeStream);
                     instructionPointer += Leb128.unsignedLeb128Size(calledFunctionIndex);
-                    Function calledFunction = functions.get(calledFunctionIndex);
+                    Function calledFunction = module.getFunctions().get(calledFunctionIndex);
 
                     // Set the return address for the current function
                     callStack.peek().setInstructionPointer(instructionPointer);
