@@ -101,7 +101,7 @@ public class BinaryParser implements Parser {
     }
 
     private void readCodeSection(final ByteArrayInputStream is)
-            throws IOException, ParserException {
+        throws IOException, ParserException {
         //section size guess for skipping purpose
         int sectionSizeGuess = is.read();
 
@@ -128,7 +128,7 @@ public class BinaryParser implements Parser {
     }
 
     private void readStartSection(final ByteArrayInputStream is)
-            throws IOException, ParserException {
+        throws IOException, ParserException {
         //section size guess for skipping purpose
         int sectionSizeGuess = is.read();
 
@@ -137,7 +137,7 @@ public class BinaryParser implements Parser {
     }
 
     private void readMemorySection(final ByteArrayInputStream is)
-            throws IOException, ParserException {
+        throws IOException, ParserException {
         //section size guess for skipping purpose
         int sectionSizeGuess = is.read();
 
@@ -160,7 +160,7 @@ public class BinaryParser implements Parser {
     }
 
     private void readFunctionSection(final ByteArrayInputStream is)
-            throws IOException, ParserException {
+        throws IOException, ParserException {
         //section size guess for skipping purpose
         int sectionSizeGuess = is.read();
 
@@ -175,7 +175,7 @@ public class BinaryParser implements Parser {
     }
 
     private void readTypeSection(final ByteArrayInputStream is)
-            throws IOException, ParserException {
+        throws IOException, ParserException {
         //section size guess for skipping purpose
         int sectionSizeGuess = is.read();
         //number of type (seems like the function header count?)

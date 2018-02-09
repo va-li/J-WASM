@@ -48,6 +48,7 @@ public class LinearMemory {
 
     /**
      * Queries the size of the memory and returns the number of linear memory pages currently allocated.
+     *
      * @return number of linear memory pages currently allocated.
      */
     public int currentMemory() {
@@ -56,6 +57,7 @@ public class LinearMemory {
 
     /**
      * Grows linear memory by a given unsigned delta of pages.
+     *
      * @param deltaPages the number of pages that should be allocated additionally to the already allocated pages
      * @return the previous memory size in units of pages or -1 on failure
      */
@@ -83,12 +85,13 @@ public class LinearMemory {
      * as unsigned values!
      * ATTENTION: Currently the alignment is ignored, as the WebAssembly Specification lists it as a hint
      * {@see https://github.com/WebAssembly/design/blob/master/Rationale.md#alignment-hints}
-     * @param address the index (starting at zero) into the linear memory specifying the starting point for the load
-     * @param offset added to the address to get the actual load address
+     *
+     * @param address   the index (starting at zero) into the linear memory specifying the starting point for the load
+     * @param offset    added to the address to get the actual load address
      * @param alignment ignored
      * @param byteCount the number of bytes to read, at most 4
-     * @param isSigned determines wether the returned value is to be interpreted as signed or unsigned and sing-extend
-     *                 it if byteCount is smaller than 4
+     * @param isSigned  determines wether the returned value is to be interpreted as signed or unsigned and sing-extend
+     *                  it if byteCount is smaller than 4
      * @return the value read from linear memory, possibly sign-extended
      */
     public int load(int address, int offset, int alignment, int byteCount, boolean isSigned) {
@@ -124,8 +127,8 @@ public class LinearMemory {
             }
         }
 
-        for (int i = byteCount; i < bytesInI32; i++) {
-            if (isSigned && msb != 0) {
+        if (isSigned && msb != 0) {
+            for (int i = byteCount; i < bytesInI32; i++) {
                 b.put((byte) 0xFF);
             }
         }
@@ -139,11 +142,12 @@ public class LinearMemory {
      * <code>address</code> and <code>offset</code> are interpreted as unsigned values!
      * ATTENTION: Currently the alignment is ignored, as the WebAssembly Specification lists it as a hint
      * {@see https://github.com/WebAssembly/design/blob/master/Rationale.md#alignment-hints}
-     * @param address the index (starting at zero) into the linear memory specifying the starting point for the store
-     * @param offset added to the address to get the actual store address
+     *
+     * @param address   the index (starting at zero) into the linear memory specifying the starting point for the store
+     * @param offset    added to the address to get the actual store address
      * @param alignment ignored
      * @param byteCount the number of bytes to store, at most 4
-     * @param value the value to store, possibly wrapped
+     * @param value     the value to store, possibly wrapped
      */
     public void store(int address, int offset, int alignment, byte byteCount, int value) {
         validateBoundsOrThrowException(address, offset, byteCount);
@@ -167,7 +171,7 @@ public class LinearMemory {
         b.putInt(value);
 
         byte[] data = b.array();
-        for (int i = 0; i < byteCount; i ++) {
+        for (int i = 0; i < byteCount; i++) {
             int currentPageOffset = (smallestPageOffset + i) % PAGE_SIZE_BYTES;
 
             page[currentPageOffset] = data[i];

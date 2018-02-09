@@ -46,7 +46,8 @@ public class WASMInterpreter {
         this.module = module;
     }
 
-    public void step() {}
+    public void step() {
+    }
 
     public void execute(int[] parameters) {
         LOG.debug("Starting execution...");
@@ -55,7 +56,7 @@ public class WASMInterpreter {
 
         // Push the parameters to the stack
         callStack.push(new ExecEnvFrame(executingFunction,
-                new Integer[executingFunction.getLocalVariableCount() + executingFunction.getParameterCount()]));
+            new Integer[executingFunction.getLocalVariableCount() + executingFunction.getParameterCount()]));
 
         for (int i = 0; i < parameters.length; i++) {
             int parameter = parameters[i];
@@ -63,7 +64,7 @@ public class WASMInterpreter {
         }
 
         ByteArrayInputStream executingCodeStream =
-                new ByteArrayInputStream(executingFunction.getInstructions());
+            new ByteArrayInputStream(executingFunction.getInstructions());
 
 
         while (executingCodeStream.available() != 0) {
@@ -197,32 +198,32 @@ public class WASMInterpreter {
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LT_U:
                     operandStack.push(
-                            Long.compareUnsigned(operandStack.pop(), operandStack.pop()) > 0 ? 1
-                                    : 0);
+                        Long.compareUnsigned(operandStack.pop(), operandStack.pop()) > 0 ? 1
+                            : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GT_S:
                     operandStack.push(operandStack.pop() < operandStack.pop() ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GT_U:
                     operandStack.push(
-                            Long.compareUnsigned(operandStack.pop(), operandStack.pop()) < 0 ? 1
-                                    : 0);
+                        Long.compareUnsigned(operandStack.pop(), operandStack.pop()) < 0 ? 1
+                            : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LE_S:
                     operandStack.push(operandStack.pop() >= operandStack.pop() ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LE_U:
                     operandStack.push(
-                            Long.compareUnsigned(operandStack.pop(), operandStack.pop()) >= 0 ? 1
-                                    : 0);
+                        Long.compareUnsigned(operandStack.pop(), operandStack.pop()) >= 0 ? 1
+                            : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GE_S:
                     operandStack.push(operandStack.pop() <= operandStack.pop() ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GE_U:
                     operandStack.push(
-                            Long.compareUnsigned(operandStack.pop(), operandStack.pop()) <= 0 ? 1
-                                    : 0);
+                        Long.compareUnsigned(operandStack.pop(), operandStack.pop()) <= 0 ? 1
+                            : 0);
                     break;
 
                 /*****************************
@@ -351,7 +352,7 @@ public class WASMInterpreter {
 
                     // Push the new function with its parameters to the call stack
                     callStack.push(new ExecEnvFrame(calledFunction,
-                            new Integer[calledFunction.getLocalVariableCount() + calledFunction.getParameterCount()]));
+                        new Integer[calledFunction.getLocalVariableCount() + calledFunction.getParameterCount()]));
                     for (int i = calledFunction.getParameterCount() - 1; i >= 0; i--) {
                         callStack.peek().setLocalVariableByIndex(operandStack.pop(), i);
                     }
@@ -366,12 +367,12 @@ public class WASMInterpreter {
 
                     if (callStack.size() == 1) {
                         int expectedReturnValueCount = callStack.peek().getFunction()
-                                .getReturnValueCount();
+                            .getReturnValueCount();
                         int actualReturnValueCount = operandStack.size() - callStack.peek().getOperandStackBase();
 
                         if (expectedReturnValueCount != actualReturnValueCount) {
                             throw new ParserException("Wrong number of return values! Expected: " +
-                                    expectedReturnValueCount + ", actual: " + actualReturnValueCount);
+                                expectedReturnValueCount + ", actual: " + actualReturnValueCount);
                         }
                         // Exit execution
                         return;

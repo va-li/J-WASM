@@ -7,7 +7,7 @@ import java.util.List;
  */
 public class Module {
     private LinearMemory linearMemory;
-    private List<Function>  functions;
+    private List<Function> functions;
     private int startFunctionIndex;
 
     public Module(LinearMemory linearMemory, List<Function> functions, int startFunctionIndex) {

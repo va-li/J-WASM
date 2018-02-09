@@ -7,7 +7,8 @@ package constants;
  */
 public final class BinaryFormat {
 
-    private BinaryFormat() {}
+    private BinaryFormat() {
+    }
 
     /**
      * [WASM 5.5.15]

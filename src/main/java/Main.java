@@ -1,13 +1,11 @@
-import com.sun.org.apache.bcel.internal.classfile.Unknown;
-import environment.Function;
 import environment.Module;
 import environment.WASMInterpreter;
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import parser.binary.BinaryParser;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Program entry point

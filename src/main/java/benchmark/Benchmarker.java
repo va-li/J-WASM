@@ -1,9 +1,10 @@
 package benchmark;
 
+import parser.binary.BinaryParser;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import parser.binary.BinaryParser;
 
 /**
  * Created by Valentin
@@ -22,10 +23,10 @@ public class Benchmarker {
                 BinaryParser factorialParser = new BinaryParser();
                 factorialParser.parse(f);
             }
-        } catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
-        double factSeconds = ((double)(System.nanoTime() - startTime) / 1000000000);
+        double factSeconds = ((double) (System.nanoTime() - startTime) / 1000000000);
 
         startTime = System.nanoTime();
         try {
@@ -34,10 +35,10 @@ public class Benchmarker {
                 BinaryParser fibonacciParser = new BinaryParser();
                 fibonacciParser.parse(f);
             }
-        } catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
-        double fibSeconds = ((double)(System.nanoTime() - startTime) / 1000000000);
+        double fibSeconds = ((double) (System.nanoTime() - startTime) / 1000000000);
         System.out.println(BENCHMARK_ROUNDS_FACTORIAL + " rounds of 'factorial.wasm' ( fac(20) ) took "
             + new DecimalFormat("#.##########").format(factSeconds) + " Seconds");
         System.out.println(BENCHMARK_ROUNDS_FIBONACCI + " rounds of 'fibonacci.wasm' ( fib(30) ) took "
