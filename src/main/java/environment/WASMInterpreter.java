@@ -1,19 +1,16 @@
 package environment;
 
-import static util.Leb128.readUnsignedLeb128;
-
-import com.sun.org.apache.xpath.internal.operations.Mod;
 import constants.BinaryFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import parser.ParserException;
+import util.Leb128;
 
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Stack;
 
-import util.Leb128;
+import static util.Leb128.readUnsignedLeb128;
 
 /**
  * Created by Valentin
@@ -147,6 +144,40 @@ public class WASMInterpreter {
                     parameter = readUnsignedLeb128(executingCodeStream);
                     callStack.peek().setLocalVariableByIndex(operandStack.peek(), parameter);
                     instructionPointer += Leb128.unsignedLeb128Size(parameter);
+                    break;
+
+                /***************************
+                 * Memory instructions
+                 ****************************/
+                case BinaryFormat.Instructions.Memory.I32_LOAD:
+                    // TODO
+                    break;
+                case BinaryFormat.Instructions.Memory.I32_LOAD8_S:
+                    // TODO
+                    break;
+                case BinaryFormat.Instructions.Memory.I32_LOAD8_U:
+                    // TODO
+                    break;
+                case BinaryFormat.Instructions.Memory.I32_LOAD16_S:
+                    // TODO
+                    break;
+                case BinaryFormat.Instructions.Memory.I32_LOAD16_U:
+                    // TODO
+                    break;
+                case BinaryFormat.Instructions.Memory.I32_STORE:
+                    // TODO
+                    break;
+                case BinaryFormat.Instructions.Memory.I32_STORE8:
+                    // TODO
+                    break;
+                case BinaryFormat.Instructions.Memory.I32_STORE16:
+                    // TODO
+                    break;
+                case BinaryFormat.Instructions.Memory.CURRENT_MEMORY:
+                    // TODO
+                    break;
+                case BinaryFormat.Instructions.Memory.GROW_MEMORY:
+                    // TODO
                     break;
 
                 /*****************************

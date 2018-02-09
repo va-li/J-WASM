@@ -1,8 +1,5 @@
 package environment;
 
-import constants.ImplementationSpecific;
-import constants.SpecificationValueBoundaryViolationException;
-import constants.WebAssemblySpecification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,14 +30,18 @@ public class LinearMemory {
     private List<byte[]> allocatedPages = new ArrayList<>();
 
     public LinearMemory(int initialPageCount) {
-        this(initialPageCount, 1);
+        this(initialPageCount, PAGE_COUNT_MAX);
     }
 
     public LinearMemory(int initialPageCount, int maxPageCount) {
         if (maxPageCount > PAGE_COUNT_MAX) {
-            throw new SpecificationValueBoundaryViolationException("Maximum Linear Memory page count must not be" +
+            throw new IllegalArgumentException("Maximum Linear Memory page count must not be" +
                 "greater than " + PAGE_COUNT_MAX);
         }
+        if (maxPageCount < 1) {
+            throw new IllegalArgumentException("Maximum Linear Memory page count cannot be less than 1");
+        }
+
         this.maxPageCount = maxPageCount;
         allocatePages(initialPageCount);
     }

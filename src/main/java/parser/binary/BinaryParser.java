@@ -1,9 +1,7 @@
 package parser.binary;
 
-import static util.Leb128.readUnsignedLeb128;
-import static util.Leb128.unsignedLeb128Size;
-
 import constants.BinaryFormat;
+import constants.ImplementationSpecific;
 import environment.Function;
 import environment.LinearMemory;
 import environment.Module;
@@ -21,6 +19,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static util.Leb128.readUnsignedLeb128;
+import static util.Leb128.unsignedLeb128Size;
+
 public class BinaryParser implements Parser {
 
     private static Logger LOG = LoggerFactory.getLogger(BinaryParser.class);
@@ -29,6 +30,7 @@ public class BinaryParser implements Parser {
     //private byte[] code;
     private List<Function> functions = new ArrayList<>();
     private int startFunctionIndex = -1;
+    private LinearMemory linearMemory;
 
 
     public Module parse(File file) throws IOException, ParserException {
@@ -95,7 +97,7 @@ public class BinaryParser implements Parser {
             }
         }
 
-        return new Module(new LinearMemory(0), this.functions, startFunctionIndex);
+        return new Module(linearMemory, functions, startFunctionIndex);
     }
 
     private void readCodeSection(final ByteArrayInputStream is)
@@ -147,12 +149,14 @@ public class BinaryParser implements Parser {
 
         //this flag specifies if a max memory is given
         int flags = is.read();
-        int maxMem = -1;
+        int maxMem = ImplementationSpecific.LinearMemory.PAGE_COUNT_MAX;
         int initMem = readUnsignedLeb128(is);
 
         if (flags == 1) {
             maxMem = readUnsignedLeb128(is);
         }
+
+        linearMemory = new LinearMemory(initMem, maxMem);
     }
 
     private void readFunctionSection(final ByteArrayInputStream is)
