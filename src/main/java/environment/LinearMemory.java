@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -89,50 +90,46 @@ public class LinearMemory {
      *                 it if byteCount is smaller than 4
      * @return the value read from linear memory, possibly sign-extended
      */
-    public long load(int address, int offset, int alignment, byte byteCount, boolean isSigned) {
+    public int load(int address, int offset, int alignment, int byteCount, boolean isSigned) {
         validateBoundsOrThrowException(address, offset, byteCount);
-
-        long effectiveAddressUnsigned = Integer.toUnsignedLong(address) + Integer.toUnsignedLong(offset);
 
         /* WebAssembly interpretes the address and offset as unsigned values and their sum as infinite precision
          * unsigned value, therefor we need the following conversions to get the right page and offset in that page */
 
+        long effectiveAddressUnsigned = Integer.toUnsignedLong(address) + Integer.toUnsignedLong(offset);
+
         // expects PAGE_SIZE_BYTES <= Integer.MAX_VALUE
-        int biggestPageOffset =
-            (int) ((effectiveAddressUnsigned + Byte.toUnsignedLong(byteCount) - 1L) % Integer.toUnsignedLong(PAGE_SIZE_BYTES));
+        int smallestPageOffset =
+            (int) (effectiveAddressUnsigned % Integer.toUnsignedLong(PAGE_SIZE_BYTES));
 
         // expects PAGE_SIZE_BYTES >= 2
         int pageNumber = (int) (effectiveAddressUnsigned / Integer.toUnsignedLong(PAGE_SIZE_BYTES));
-
-        int loadedValue = 0;
-        int bitsInByte = 8;
-        int bytesInI32 = 4;
         byte[] page = allocatedPages.get(pageNumber);
 
-        for (int i = 0; i < Byte.toUnsignedInt(byteCount); i++) {
-            // shift right unsigned to make room for the next byte red from linear memory
-            loadedValue >>>= bitsInByte;
-            // value is stored little endian, but we need it as big endian
-            int loadedByte = Byte.toUnsignedInt(page[biggestPageOffset - i]);
-            loadedValue = loadedValue | (loadedByte << (bitsInByte * (bytesInI32 - i - 1)));
+        final int bytesInI32 = 4;
+        ByteBuffer b = ByteBuffer.allocate(bytesInI32);
+        b.order(ByteOrder.LITTLE_ENDIAN);
+        final byte msbMask = (byte) 0x80;
+        byte msb = 0;
+        for (int i = 0; i < byteCount; i++) {
+            int currentPageOffset = (smallestPageOffset + i) % PAGE_SIZE_BYTES;
+            b.put(page[currentPageOffset]);
+            msb = (byte) (page[currentPageOffset] & msbMask);
 
-            if ((effectiveAddressUnsigned + i + 1) % PAGE_SIZE_BYTES == 0) {
-                // We've red the last value on this page, the next value is on the succeeding page
+            int nextPageOffset = (currentPageOffset + 1) % PAGE_SIZE_BYTES;
+            if (nextPageOffset < currentPageOffset) {
+                // We've red the last value on this page, the next value is on the preceeding page
                 page = allocatedPages.get(pageNumber + 1);
             }
         }
 
-        // if the number of bytes red is smaller than the number of byte in i32 we need to shift if to the right and
-        // signextend it if necessary
         for (int i = byteCount; i < bytesInI32; i++) {
-            if (isSigned) {
-                loadedValue >>= bitsInByte;
-            } else {
-                loadedValue >>>= bitsInByte;
+            if (isSigned && msb != 0) {
+                b.put((byte) 0xFF);
             }
         }
 
-        return loadedValue;
+        return b.getInt(0);
     }
 
     /**
@@ -149,13 +146,43 @@ public class LinearMemory {
      */
     public void store(int address, int offset, int alignment, byte byteCount, int value) {
         validateBoundsOrThrowException(address, offset, byteCount);
-        // TODO
+
+        /* WebAssembly interpretes the address and offset as unsigned values and their sum as infinite precision
+         * unsigned value, therefor we need the following conversions to get the right page and offset in that page */
+
+        long effectiveAddressUnsigned = Integer.toUnsignedLong(address) + Integer.toUnsignedLong(offset);
+
+        // expects PAGE_SIZE_BYTES <= Integer.MAX_VALUE
+        int smallestPageOffset =
+            (int) ((effectiveAddressUnsigned) % Integer.toUnsignedLong(PAGE_SIZE_BYTES));
+
+        // expects PAGE_SIZE_BYTES >= 2
+        int pageNumber = (int) (effectiveAddressUnsigned / Integer.toUnsignedLong(PAGE_SIZE_BYTES));
+        byte[] page = allocatedPages.get(pageNumber);
+
+        final int bytesInI32 = 4;
+        ByteBuffer b = ByteBuffer.allocate(bytesInI32);
+        b.order(ByteOrder.LITTLE_ENDIAN);
+        b.putInt(value);
+
+        byte[] data = b.array();
+        for (int i = 0; i < byteCount; i ++) {
+            int currentPageOffset = (smallestPageOffset + i) % PAGE_SIZE_BYTES;
+
+            page[currentPageOffset] = data[i];
+
+            int nextPageOffset = (currentPageOffset + 1) % PAGE_SIZE_BYTES;
+            if (nextPageOffset < currentPageOffset) {
+                // We've red the last value on this page, the next value is on the preceeding page
+                page = allocatedPages.get(pageNumber + 1);
+            }
+        }
     }
 
-    private void validateBoundsOrThrowException(int address, int offset, byte byteCount) {
+    private void validateBoundsOrThrowException(int address, int offset, int byteCount) {
         long addressUnsigned = Integer.toUnsignedLong(address);
         long offestUnsigned = Integer.toUnsignedLong(offset);
-        long byteCountUnsigned = Byte.toUnsignedLong(byteCount);
+        long byteCountUnsigned = Integer.toUnsignedLong(byteCount);
 
         // (- 1) becaus those are indices starting at 0
         long biggestValidIndex = (allocatedPages.size() * PAGE_SIZE_BYTES) - 1;
