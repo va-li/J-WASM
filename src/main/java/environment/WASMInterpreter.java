@@ -56,7 +56,7 @@ public class WASMInterpreter {
 
         // Push the parameters to the stack
         callStack.push(new ExecEnvFrame(executingFunction,
-            new Integer[executingFunction.getLocalVariableCount() + executingFunction.getParameterCount()]));
+                new Integer[executingFunction.getLocalVariableCount() + executingFunction.getParameterCount()]));
 
         for (int i = 0; i < parameters.length; i++) {
             int parameter = parameters[i];
@@ -64,14 +64,66 @@ public class WASMInterpreter {
         }
 
         ByteArrayInputStream executingCodeStream =
-            new ByteArrayInputStream(executingFunction.getInstructions());
+                new ByteArrayInputStream(executingFunction.getInstructions());
 
 
         while (executingCodeStream.available() != 0) {
-            byte opCode = (byte) executingCodeStream.read();
+            ExecEnvFrame stackFrame = callStack.peek();
+
+            byte opCode;
+
+            if (stackFrame.isSavedLoopExec() && !stackFrame.isSkipLoopCode()) {
+                //when we are executing a loop for the NON-first time,
+                //we get the instructions from our loop-instruction queue
+                //and add it again to the queue to be able to execute further loop runs
+                opCode = stackFrame.getLoopQueue().poll();
+                stackFrame.getLoopQueue().add(opCode);
+            } else {
+                opCode = (byte) executingCodeStream.read();
+                if (stackFrame.isSkipLoopCode()) {
+                    //when the skipLoop flag is set we want to skip all the code till we got to the loop end
+                    if (BinaryFormat.Instructions.Control.IF == opCode) {
+                        stackFrame.getEndStack().push(ExecEnvFrame.EndValue.IF);
+                        instructionPointer++;
+                        continue;
+                    }
+                    if (BinaryFormat.Instructions.Control.BLOCK == opCode) {
+                        stackFrame.getEndStack().push(ExecEnvFrame.EndValue.BLOCK);
+                        instructionPointer++;
+                        continue;
+                    }
+                    if (BinaryFormat.Instructions.Control.LOOP == opCode) {
+                        stackFrame.getEndStack().push(ExecEnvFrame.EndValue.LOOP);
+                        instructionPointer++;
+                        continue;
+                    }
+                    if (BinaryFormat.Instructions.Control.END == opCode) {
+                        if (ExecEnvFrame.EndValue.LOOP.equals(stackFrame.getEndStack().pop())) {
+                            stackFrame.resetLoop();
+                        }
+                    } else {
+                        instructionPointer++;
+                    }
+                    continue;
+                }
+                if (stackFrame.isFirstLoopExec()) {
+                    //when we are executing the loop for the first time,
+                    //save all operations in a queue to execute them later in the additional runs
+                    stackFrame.getLoopQueue().add(opCode);
+
+                    //now repeat the loop!
+                    if (BinaryFormat.Instructions.Control.END == opCode) {
+                        stackFrame.getLoopQueue().add(opCode);
+                        stackFrame.setFirstLoopExec(false);
+                        stackFrame.setSavedLoopExec(true);
+                        instructionPointer++;
+                        continue;
+                    }
+                }
+            }
+
             int parameter;
 
-            ExecEnvFrame stackFrame = callStack.peek();
             if (stackFrame.isSkipCode()) {
                 //when we see another block thing throw it into our stack
                 if (BinaryFormat.Instructions.Control.IF == opCode) {
@@ -89,7 +141,6 @@ public class WASMInterpreter {
                     instructionPointer++;
                     continue;
                 }
-
 
                 if (!stackFrame.isIfBranch()) { //skipCode && else
                     if (stackFrame.getEndStack().size() == stackFrame.getIfDepth()) {
@@ -115,7 +166,13 @@ public class WASMInterpreter {
                         LOG.debug(Arrays.toString(operandStack.toArray()));
                         return;
                     }
-                    stackFrame.getEndStack().pop();
+                    if (ExecEnvFrame.EndValue.LOOP.equals(stackFrame.getEndStack().pop())) {
+                        instructionPointer = stackFrame.getLoopBeginInstructionPointer();
+                        if (stackFrame.isFirstLoopExec()) {
+                            stackFrame.setFirstLoopExec(false);
+                            stackFrame.setSavedLoopExec(true);
+                        }
+                    }
                 }
                 instructionPointer++;
                 continue;
@@ -127,22 +184,22 @@ public class WASMInterpreter {
                  ****************************/
                 case BinaryFormat.Instructions.Numeric.I32_CONST:
                     //the int is LEB128 encoded, so read it and then add the operation
-                    parameter = readUnsignedLeb128(executingCodeStream);
+                    parameter = readLoopSave(executingCodeStream, stackFrame);
                     operandStack.push(parameter);
                     instructionPointer += Leb128.unsignedLeb128Size(parameter);
                     break;
                 case BinaryFormat.Instructions.Variable.GET_LOCAL:
-                    parameter = readUnsignedLeb128(executingCodeStream);
+                    parameter = readLoopSave(executingCodeStream, stackFrame);
                     operandStack.push(callStack.peek().getLocalVariableByIndex(parameter));
                     instructionPointer += Leb128.unsignedLeb128Size(parameter);
                     break;
                 case BinaryFormat.Instructions.Variable.SET_LOCAL:
-                    parameter = readUnsignedLeb128(executingCodeStream);
+                    parameter = readLoopSave(executingCodeStream, stackFrame);
                     callStack.peek().setLocalVariableByIndex(operandStack.pop(), parameter);
                     instructionPointer += Leb128.unsignedLeb128Size(parameter);
                     break;
                 case BinaryFormat.Instructions.Variable.TEE_LOCAL:
-                    parameter = readUnsignedLeb128(executingCodeStream);
+                    parameter = readLoopSave(executingCodeStream, stackFrame);
                     callStack.peek().setLocalVariableByIndex(operandStack.peek(), parameter);
                     instructionPointer += Leb128.unsignedLeb128Size(parameter);
                     break;
@@ -198,32 +255,32 @@ public class WASMInterpreter {
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LT_U:
                     operandStack.push(
-                        Long.compareUnsigned(operandStack.pop(), operandStack.pop()) > 0 ? 1
-                            : 0);
+                            Long.compareUnsigned(operandStack.pop(), operandStack.pop()) > 0 ? 1
+                                    : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GT_S:
                     operandStack.push(operandStack.pop() < operandStack.pop() ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GT_U:
                     operandStack.push(
-                        Long.compareUnsigned(operandStack.pop(), operandStack.pop()) < 0 ? 1
-                            : 0);
+                            Long.compareUnsigned(operandStack.pop(), operandStack.pop()) < 0 ? 1
+                                    : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LE_S:
                     operandStack.push(operandStack.pop() >= operandStack.pop() ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LE_U:
                     operandStack.push(
-                        Long.compareUnsigned(operandStack.pop(), operandStack.pop()) >= 0 ? 1
-                            : 0);
+                            Long.compareUnsigned(operandStack.pop(), operandStack.pop()) >= 0 ? 1
+                                    : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GE_S:
                     operandStack.push(operandStack.pop() <= operandStack.pop() ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GE_U:
                     operandStack.push(
-                        Long.compareUnsigned(operandStack.pop(), operandStack.pop()) <= 0 ? 1
-                            : 0);
+                            Long.compareUnsigned(operandStack.pop(), operandStack.pop()) <= 0 ? 1
+                                    : 0);
                     break;
 
                 /*****************************
@@ -324,7 +381,28 @@ public class WASMInterpreter {
                     stackFrame.getEndStack().push(ExecEnvFrame.EndValue.BLOCK);
                     break;
                 case BinaryFormat.Instructions.Control.LOOP:
+                    stackFrame.getEndStack().push(ExecEnvFrame.EndValue.LOOP);
+                    stackFrame.setFirstLoopExec(true);
+                    stackFrame.setSavedLoopExec(false);
+                    stackFrame.setLoopBeginInstructionPointer(instructionPointer);
                     //TODO: Wait for loop instruction
+                    break;
+                case BinaryFormat.Instructions.Control.BR_IF:
+                    byte break_depth;
+                    if (stackFrame.isFirstLoopExec()) {
+                        break_depth = (byte) executingCodeStream.read();
+                        stackFrame.getLoopQueue().add(break_depth);
+                    } else {
+                        break_depth = stackFrame.getLoopQueue().poll();
+                        stackFrame.getLoopQueue().add(break_depth);
+                    }
+                    boolean brIfExpression = operandStack.peek() != 0;
+                    if (brIfExpression) {
+                        //if the branch condition is true, skip the loop
+                        operandStack.pop();
+                        stackFrame.resetLoop();
+                        stackFrame.setSkipLoopCode(true);
+                    }
                     break;
                 case BinaryFormat.Instructions.Control.ELSE:
                     //TODO: hopefully this is right...
@@ -352,7 +430,7 @@ public class WASMInterpreter {
 
                     // Push the new function with its parameters to the call stack
                     callStack.push(new ExecEnvFrame(calledFunction,
-                        new Integer[calledFunction.getLocalVariableCount() + calledFunction.getParameterCount()]));
+                            new Integer[calledFunction.getLocalVariableCount() + calledFunction.getParameterCount()]));
                     for (int i = calledFunction.getParameterCount() - 1; i >= 0; i--) {
                         callStack.peek().setLocalVariableByIndex(operandStack.pop(), i);
                     }
@@ -367,12 +445,12 @@ public class WASMInterpreter {
 
                     if (callStack.size() == 1) {
                         int expectedReturnValueCount = callStack.peek().getFunction()
-                            .getReturnValueCount();
+                                .getReturnValueCount();
                         int actualReturnValueCount = operandStack.size() - callStack.peek().getOperandStackBase();
 
                         if (expectedReturnValueCount != actualReturnValueCount) {
                             throw new ParserException("Wrong number of return values! Expected: " +
-                                expectedReturnValueCount + ", actual: " + actualReturnValueCount);
+                                    expectedReturnValueCount + ", actual: " + actualReturnValueCount);
                         }
                         // Exit execution
                         return;
@@ -393,11 +471,30 @@ public class WASMInterpreter {
                     break;
                 case -1:
                     throw new ParserException("Unexpected end of file! @code 0x10 body");
+                case 127:
+                    LOG.debug("well, its ok..");
+                    break;
                 default:
                     throw new ParserException("Invalid (or not implemented) instruction!");
-
             }
+//            if (stackFrame.isFirstLoopExec()) {
+//                stackFrame.getLoopQueue().add(opCode);
+//            }
             instructionPointer++;
         }
+    }
+
+    private int readLoopSave(ByteArrayInputStream is, ExecEnvFrame stack) {
+        int value;
+        if (stack.isFirstLoopExec()) {
+            value = readUnsignedLeb128(is);
+            stack.getIntLoopQueue().add(value);
+        } else if (stack.isSavedLoopExec()) {
+            value = stack.getIntLoopQueue().poll();
+            stack.getIntLoopQueue().add(value);
+        } else {
+            value = readUnsignedLeb128(is);
+        }
+        return value;
     }
 }

@@ -1,5 +1,7 @@
 package environment;
 
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Stack;
 
 /**
@@ -12,13 +14,20 @@ public class ExecEnvFrame {
     private final Integer[] localVariables;
 
     private long instructionPointer = 0;
+    private long loopBeginInstructionPointer = 0;
 
     private int ifDepth = 0;
     private int operandStackBase = 0;
     private boolean ifBranch = true;
     private boolean skipCode = false;
+    private boolean firstLoopExec = false;
+    private boolean savedLoopExec = false;
+    private boolean skipLoopCode = false;
 
     private final Stack<EndValue> endStack = new Stack<>();
+
+    private final Queue<Byte> loopQueue = new LinkedList<>();
+    private final Queue<Integer> intLoopQueue = new LinkedList<>();
 
     public ExecEnvFrame(Function function, Integer[] localVariables) {
         this.function = function;
@@ -83,6 +92,55 @@ public class ExecEnvFrame {
 
     public Stack<EndValue> getEndStack() {
         return endStack;
+    }
+
+    public boolean isFirstLoopExec() {
+        return firstLoopExec;
+    }
+
+    public void setFirstLoopExec(boolean firstLoopExec) {
+        this.firstLoopExec = firstLoopExec;
+    }
+
+    public boolean isSavedLoopExec() {
+        return savedLoopExec;
+    }
+
+    public void setSavedLoopExec(boolean savedLoopExec) {
+        this.savedLoopExec = savedLoopExec;
+    }
+
+    public Queue<Byte> getLoopQueue() {
+        return loopQueue;
+    }
+
+    public long getLoopBeginInstructionPointer() {
+        return loopBeginInstructionPointer;
+    }
+
+    public void setLoopBeginInstructionPointer(long loopBeginInstructionPointer) {
+        this.loopBeginInstructionPointer = loopBeginInstructionPointer;
+    }
+
+    public void setSkipLoopCode(boolean skipLoopCode) {
+        this.skipLoopCode = skipLoopCode;
+    }
+
+    public boolean isSkipLoopCode() {
+        return skipLoopCode;
+    }
+
+    public void resetLoop() {
+        this.loopQueue.clear();
+        this.intLoopQueue.clear();
+        this.loopBeginInstructionPointer = 0;
+        this.firstLoopExec = false;
+        this.savedLoopExec = false;
+        this.skipLoopCode = false;
+    }
+
+    public Queue<Integer> getIntLoopQueue() {
+        return intLoopQueue;
     }
 
     enum EndValue {

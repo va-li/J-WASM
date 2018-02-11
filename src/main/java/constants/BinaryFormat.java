@@ -148,6 +148,7 @@ public final class BinaryFormat {
             public static final byte NOP = 0x01;
             public static final byte BLOCK = 0x02;
             public static final byte LOOP = 0x03;
+            public static final byte BR_IF = 0x0D;
             public static final byte IF = 0x04;
             public static final byte ELSE = 0x05;
             public static final byte END = 0x0B;
