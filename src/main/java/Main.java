@@ -1,5 +1,5 @@
 import environment.Module;
-import environment.WASMInterpreter;
+import environment.WasmInterpreter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import parser.binary.BinaryParser;
@@ -50,7 +50,7 @@ public class Main {
 
                 Module module = new BinaryParser().parse(exectuable);
 
-                new WASMInterpreter(module).execute(programArguments);
+                new WasmInterpreter(module).execute(programArguments);
         }
     }
 

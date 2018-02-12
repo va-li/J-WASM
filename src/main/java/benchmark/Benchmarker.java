@@ -1,6 +1,6 @@
 package benchmark;
 
-import environment.WASMInterpreter;
+import environment.WasmInterpreter;
 import parser.binary.BinaryParser;
 
 import java.io.File;
@@ -23,7 +23,7 @@ public class Benchmarker {
             File f = new File("loop3.wasm");
             for (int i = 0; i < BENCHMARK_ROUNDS_LOOP; i++) {
                 BinaryParser factorialParser = new BinaryParser();
-                new WASMInterpreter(factorialParser.parse(f)).execute(new int[]{});
+                new WasmInterpreter(factorialParser.parse(f)).execute(new int[]{});
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -36,7 +36,7 @@ public class Benchmarker {
             File f = new File("factorial.wasm");
             for (int i = 0; i < BENCHMARK_ROUNDS_FACTORIAL; i++) {
                 BinaryParser factorialParser = new BinaryParser();
-                new WASMInterpreter(factorialParser.parse(f)).execute(new int[]{});
+                new WasmInterpreter(factorialParser.parse(f)).execute(new int[]{});
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -48,7 +48,7 @@ public class Benchmarker {
             File f = new File("fibonacci.wasm");
             for (int i = 0; i < BENCHMARK_ROUNDS_FIBONACCI; i++) {
                 BinaryParser fibonacciParser = new BinaryParser();
-                new WASMInterpreter(fibonacciParser.parse(f)).execute(new int[]{});
+                new WasmInterpreter(fibonacciParser.parse(f)).execute(new int[]{});
             }
         } catch (IOException e) {
             e.printStackTrace();

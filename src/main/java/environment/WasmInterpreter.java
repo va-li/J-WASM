@@ -16,8 +16,8 @@ import static util.Leb128.readUnsignedLeb128;
  * Created by Valentin
  * TODO documentation
  */
-public class WASMInterpreter {
-    private static Logger LOG = LoggerFactory.getLogger(WASMInterpreter.class);
+public class WasmInterpreter {
+    private static Logger LOG = LoggerFactory.getLogger(WasmInterpreter.class);
 
     /**
      * The Instruction Pointer points to a byte in the instruction stream (a byte array) that should be interpreted and
@@ -42,7 +42,7 @@ public class WASMInterpreter {
      */
     private Stack<Integer> operandStack = new Stack<>();
 
-    public WASMInterpreter(Module module) {
+    public WasmInterpreter(Module module) {
         this.module = module;
     }
 
@@ -208,34 +208,79 @@ public class WASMInterpreter {
                  * Memory instructions
                  ****************************/
                 case BinaryFormat.Instructions.Memory.I32_LOAD:
-                    // TODO
+                    int alignment = Leb128.readUnsignedLeb128(executingCodeStream);
+                    int offset = Leb128.readUnsignedLeb128(executingCodeStream);
+                    int address = operandStack.pop();
+                    operandStack.push(module.getLinearMemory()
+                        .load(address, alignment, offset, 4, LinearMemory.SIGNEDNESS.UNSIGNED));
+                    instructionPointer += Leb128.unsignedLeb128Size(alignment) + Leb128.unsignedLeb128Size(offset);
                     break;
                 case BinaryFormat.Instructions.Memory.I32_LOAD8_S:
-                    // TODO
+                    alignment = Leb128.readUnsignedLeb128(executingCodeStream);
+                    offset = Leb128.readUnsignedLeb128(executingCodeStream);
+                    address = operandStack.pop();
+                    operandStack.push(module.getLinearMemory()
+                        .load(address, alignment, offset, 1, LinearMemory.SIGNEDNESS.SIGNED));
+                    instructionPointer += Leb128.unsignedLeb128Size(alignment) + Leb128.unsignedLeb128Size(offset);
                     break;
                 case BinaryFormat.Instructions.Memory.I32_LOAD8_U:
-                    // TODO
+                    alignment = Leb128.readUnsignedLeb128(executingCodeStream);
+                    offset = Leb128.readUnsignedLeb128(executingCodeStream);
+                    address = operandStack.pop();
+                    operandStack.push(module.getLinearMemory()
+                        .load(address, alignment, offset, 1, LinearMemory.SIGNEDNESS.UNSIGNED));
+                    instructionPointer += Leb128.unsignedLeb128Size(alignment) + Leb128.unsignedLeb128Size(offset);
                     break;
                 case BinaryFormat.Instructions.Memory.I32_LOAD16_S:
-                    // TODO
+                    alignment = Leb128.readUnsignedLeb128(executingCodeStream);
+                    offset = Leb128.readUnsignedLeb128(executingCodeStream);
+                    address = operandStack.pop();
+                    operandStack.push(module.getLinearMemory()
+                        .load(address, alignment, offset, 2, LinearMemory.SIGNEDNESS.SIGNED));
+                    instructionPointer += Leb128.unsignedLeb128Size(alignment) + Leb128.unsignedLeb128Size(offset);
                     break;
                 case BinaryFormat.Instructions.Memory.I32_LOAD16_U:
-                    // TODO
+                    alignment = Leb128.readUnsignedLeb128(executingCodeStream);
+                    offset = Leb128.readUnsignedLeb128(executingCodeStream);
+                    address = operandStack.pop();
+                    operandStack.push(module.getLinearMemory()
+                        .load(address, alignment, offset, 2, LinearMemory.SIGNEDNESS.UNSIGNED));
+                    instructionPointer += Leb128.unsignedLeb128Size(alignment) + Leb128.unsignedLeb128Size(offset);
                     break;
                 case BinaryFormat.Instructions.Memory.I32_STORE:
-                    // TODO
+                    alignment = Leb128.readUnsignedLeb128(executingCodeStream);
+                    offset = Leb128.readUnsignedLeb128(executingCodeStream);
+                    int value = operandStack.pop();
+                    address = operandStack.pop();
+                    module.getLinearMemory().store(address, alignment, offset, 4, value);
+                    instructionPointer += Leb128.unsignedLeb128Size(alignment) + Leb128.unsignedLeb128Size(offset);
                     break;
                 case BinaryFormat.Instructions.Memory.I32_STORE8:
-                    // TODO
+                    alignment = Leb128.readUnsignedLeb128(executingCodeStream);
+                    offset = Leb128.readUnsignedLeb128(executingCodeStream);
+                    value = operandStack.pop();
+                    address = operandStack.pop();
+                    module.getLinearMemory().store(address, alignment, offset, 1, value);
+                    instructionPointer += Leb128.unsignedLeb128Size(alignment) + Leb128.unsignedLeb128Size(offset);
                     break;
                 case BinaryFormat.Instructions.Memory.I32_STORE16:
-                    // TODO
+                    alignment = Leb128.readUnsignedLeb128(executingCodeStream);
+                    offset = Leb128.readUnsignedLeb128(executingCodeStream);
+                    value = operandStack.pop();
+                    address = operandStack.pop();
+                    module.getLinearMemory().store(address, alignment, offset, 2, value);
+                    instructionPointer += Leb128.unsignedLeb128Size(alignment) + Leb128.unsignedLeb128Size(offset);
                     break;
                 case BinaryFormat.Instructions.Memory.CURRENT_MEMORY:
-                    // TODO
+                    executingCodeStream.skip(1); // an all zero byte is reserved for future use, so just skip it
+                    operandStack.push(module.getLinearMemory().currentMemory());
+                    instructionPointer++;
                     break;
                 case BinaryFormat.Instructions.Memory.GROW_MEMORY:
-                    // TODO
+                    executingCodeStream.skip(1); // an all zero byte is reserved for future use, so just skip it
+                    int deltaPages = operandStack.pop();
+                    operandStack.push(module.getLinearMemory().growMemory(deltaPages));
+                    instructionPointer++;
                     break;
 
                 /*****************************

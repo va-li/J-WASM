@@ -17,6 +17,11 @@ import static constants.WebAssemblySpecification.LinearMemory.PAGE_SIZE_BYTES;
  * {@see WebAssemblySpecification.LinearMemory.PAGE_SIZE_BYTES}.
  */
 public class LinearMemory {
+    public enum SIGNEDNESS {
+        SIGNED,
+        UNSIGNED
+    }
+
     private static Logger LOG = LoggerFactory.getLogger(LinearMemory.class);
 
     /**
@@ -80,21 +85,21 @@ public class LinearMemory {
 
     /**
      * Loads <code>byteCount</code> number of bytes at <code>address + offset</code> from linear memory, interpretes it
-     * as little endian, if <code>isSigned</code> is <code>true</code> and byteCount is smaller than 4
+     * as little endian, if <code>signedness</code> is <code>SIGNED</code> and byteCount is smaller than 4
      * (number of byte in i32) signextends it to 4 bytes. <code>address</code> and <code>offset</code> are interpreted
      * as unsigned values!
      * ATTENTION: Currently the alignment is ignored, as the WebAssembly Specification lists it as a hint
      * {@see https://github.com/WebAssembly/design/blob/master/Rationale.md#alignment-hints}
      *
      * @param address   the index (starting at zero) into the linear memory specifying the starting point for the load
-     * @param offset    added to the address to get the actual load address
      * @param alignment ignored
+     * @param offset    added to the address to get the actual load address
      * @param byteCount the number of bytes to read, at most 4
-     * @param isSigned  determines wether the returned value is to be interpreted as signed or unsigned and sing-extend
+     * @param signedness  determines wether the returned value is to be interpreted as signed or unsigned and sing-extend
      *                  it if byteCount is smaller than 4
      * @return the value read from linear memory, possibly sign-extended
      */
-    public int load(int address, int offset, int alignment, int byteCount, boolean isSigned) {
+    public int load(int address, int alignment, int offset, int byteCount, SIGNEDNESS signedness) {
         validateBoundsOrThrowException(address, offset, byteCount);
 
         /* WebAssembly interpretes the address and offset as unsigned values and their sum as infinite precision
@@ -127,7 +132,7 @@ public class LinearMemory {
             }
         }
 
-        if (isSigned && msb != 0) {
+        if (signedness.equals(SIGNEDNESS.SIGNED) && msb != 0) {
             for (int i = byteCount; i < bytesInI32; i++) {
                 b.put((byte) 0xFF);
             }
@@ -142,14 +147,13 @@ public class LinearMemory {
      * <code>address</code> and <code>offset</code> are interpreted as unsigned values!
      * ATTENTION: Currently the alignment is ignored, as the WebAssembly Specification lists it as a hint
      * {@see https://github.com/WebAssembly/design/blob/master/Rationale.md#alignment-hints}
-     *
      * @param address   the index (starting at zero) into the linear memory specifying the starting point for the store
-     * @param offset    added to the address to get the actual store address
      * @param alignment ignored
+     * @param offset    added to the address to get the actual store address
      * @param byteCount the number of bytes to store, at most 4
      * @param value     the value to store, possibly wrapped
      */
-    public void store(int address, int offset, int alignment, byte byteCount, int value) {
+    public void store(int address, int alignment, int offset, int byteCount, int value) {
         validateBoundsOrThrowException(address, offset, byteCount);
 
         /* WebAssembly interpretes the address and offset as unsigned values and their sum as infinite precision
