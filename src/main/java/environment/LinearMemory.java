@@ -51,6 +51,10 @@ public class LinearMemory {
         allocatePages(initialPageCount);
     }
 
+    public List<byte[]> getAllocatedPages() {
+        return allocatedPages;
+    }
+
     /**
      * Queries the size of the memory and returns the number of linear memory pages currently allocated.
      *

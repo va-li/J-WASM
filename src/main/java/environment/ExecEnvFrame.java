@@ -5,16 +5,22 @@ import java.util.Queue;
 import java.util.Stack;
 
 /**
- * Created by Valentin
- * TODO documentation
+ * This class is similar to an Activation Frame/Record in other machines, as it stores local variables and the
+ * instruction pointer, in addition to many other values/references needed for the execution of a WASM module.
  */
 public class ExecEnvFrame {
+
+    public enum EndValue {
+        LOOP,
+        IF,
+        BLOCK
+    }
 
     private final Function function;
     private final Integer[] localVariables;
 
-    private long instructionPointer = 0;
-    private long loopBeginInstructionPointer = 0;
+    private int instructionPointer = 0;
+    private int loopBeginInstructionPointer = 0;
 
     private int ifDepth = 0;
     private int operandStackBase = 0;
@@ -50,11 +56,11 @@ public class ExecEnvFrame {
         localVariables[index] = value;
     }
 
-    public long getInstructionPointer() {
+    public int getInstructionPointer() {
         return instructionPointer;
     }
 
-    public void setInstructionPointer(long instructionPointer) {
+    public void setInstructionPointer(int instructionPointer) {
         this.instructionPointer = instructionPointer;
     }
 
@@ -114,11 +120,11 @@ public class ExecEnvFrame {
         return loopQueue;
     }
 
-    public long getLoopBeginInstructionPointer() {
+    public int getLoopBeginInstructionPointer() {
         return loopBeginInstructionPointer;
     }
 
-    public void setLoopBeginInstructionPointer(long loopBeginInstructionPointer) {
+    public void setLoopBeginInstructionPointer(int loopBeginInstructionPointer) {
         this.loopBeginInstructionPointer = loopBeginInstructionPointer;
     }
 
@@ -141,11 +147,5 @@ public class ExecEnvFrame {
 
     public Queue<Integer> getIntLoopQueue() {
         return intLoopQueue;
-    }
-
-    enum EndValue {
-        LOOP,
-        IF,
-        BLOCK
     }
 }

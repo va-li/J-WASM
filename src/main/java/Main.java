@@ -1,8 +1,8 @@
 import environment.Module;
-import environment.WasmInterpreter;
+import interpreter.WasmInterpreter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import parser.binary.BinaryParser;
+import parser.BinaryParser;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,17 +21,21 @@ public class Main {
             return;
         }
 
+        boolean dumpLinearMemory = false;
         switch (args[0]) {
             case "-h":
             case "--help":
                 printUsageMessage();
                 break;
-
+            case "-d":
+            case "--dump-linear-memory":
+                dumpLinearMemory = true;
+                break;
             default:
                 File exectuable = new File(args[0]);
-                int[] programArguments = new int[0];
+                int[] programArguments = new int[0]; // currently unused
 
-                LOG.debug("Loading executable '{}'.", exectuable.getName());
+                LOG.debug("Load executable '{}'", exectuable.getName());
                 if (!exectuable.exists() || exectuable.isDirectory()) {
                     LOG.error("'{}' is not a file.", exectuable.getName());
                     printUsageMessage();
@@ -50,14 +54,14 @@ public class Main {
 
                 Module module = new BinaryParser().parse(exectuable);
 
-                new WasmInterpreter(module).execute(programArguments);
+                new WasmInterpreter(module).execute(programArguments, dumpLinearMemory);
         }
     }
 
     private static void printUsageMessage() {
         LOG.info(
-            "Usage: j-wasm <file-name.wasm> [arguments]\n"
-                + "\t\tExecutes the passed WebAssebly program 'file-name.wasm' with the passed arguments 'args'.\n\n"
+            "Usage: j-wasm <file-name.wasm>\n"
+                + "\t\tExecutes the passed WebAssebly program 'file-name.wasm'.\n\n"
                 + "\t-h, --help\n"
                 + "\t\t Prints this usage message."
         );

@@ -1,20 +1,26 @@
-package environment;
+package interpreter;
 
 import constants.BinaryFormat;
+import environment.ExecEnvFrame;
+import environment.Function;
+import environment.LinearMemory;
+import environment.Module;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import parser.ParserException;
 import util.Leb128;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Stack;
 
 import static util.Leb128.readUnsignedLeb128;
 
 /**
- * Created by Valentin
- * TODO documentation
+ * Executes a WASM module's code
  */
 public class WasmInterpreter {
     private static Logger LOG = LoggerFactory.getLogger(WasmInterpreter.class);
@@ -23,7 +29,7 @@ public class WasmInterpreter {
      * The Instruction Pointer points to a byte in the instruction stream (a byte array) that should be interpreted and
      * executed.
      */
-    private long instructionPointer;
+    private int instructionPointer;
 
     /**
      * The WebAssembly module to be interpreted and executed
@@ -46,26 +52,15 @@ public class WasmInterpreter {
         this.module = module;
     }
 
-    public void step() {
-    }
-
-    public void execute(int[] parameters) {
-        LOG.debug("Starting execution...");
+    public void execute(int[] parameters, boolean dumpLinearMemory) {
+        LOG.debug("Start of execution");
 
         Function executingFunction = module.getStartFunction();
 
-        // Push the parameters to the stack
-        callStack.push(new ExecEnvFrame(executingFunction,
-                new Integer[executingFunction.getLocalVariableCount() + executingFunction.getParameterCount()]));
+        // The starting function in WebAssembly has no parameters and no local variables, therefore "new Integer[0]"
+        callStack.push(new ExecEnvFrame(executingFunction, new Integer[0]));
 
-        for (int i = 0; i < parameters.length; i++) {
-            int parameter = parameters[i];
-            callStack.peek().setLocalVariableByIndex(parameter, i);
-        }
-
-        ByteArrayInputStream executingCodeStream =
-                new ByteArrayInputStream(executingFunction.getInstructions());
-
+        ByteArrayInputStream executingCodeStream = new ByteArrayInputStream(executingFunction.getInstructions());
 
         while (executingCodeStream.available() != 0) {
             ExecEnvFrame stackFrame = callStack.peek();
@@ -300,24 +295,21 @@ public class WasmInterpreter {
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LT_U:
                     operandStack.push(
-                            Long.compareUnsigned(operandStack.pop(), operandStack.pop()) > 0 ? 1
-                                    : 0);
+                            Long.compareUnsigned(operandStack.pop(), operandStack.pop()) > 0 ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GT_S:
                     operandStack.push(operandStack.pop() < operandStack.pop() ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GT_U:
                     operandStack.push(
-                            Long.compareUnsigned(operandStack.pop(), operandStack.pop()) < 0 ? 1
-                                    : 0);
+                            Long.compareUnsigned(operandStack.pop(), operandStack.pop()) < 0 ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LE_S:
                     operandStack.push(operandStack.pop() >= operandStack.pop() ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_LE_U:
                     operandStack.push(
-                            Long.compareUnsigned(operandStack.pop(), operandStack.pop()) >= 0 ? 1
-                                    : 0);
+                            Long.compareUnsigned(operandStack.pop(), operandStack.pop()) >= 0 ? 1 : 0);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_GE_S:
                     operandStack.push(operandStack.pop() <= operandStack.pop() ? 1 : 0);
@@ -399,26 +391,36 @@ public class WasmInterpreter {
                  * Bitwise instructions
                  *********************************/
                 case BinaryFormat.Instructions.Numeric.I32_SHL:
-                    operandStack.push(operandStack.pop() << operandStack.pop());
+                    secondOperand = operandStack.pop();
+                    firstOperand = operandStack.pop();
+                    operandStack.push(firstOperand << secondOperand);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_SHR_S:
-                    operandStack.push(operandStack.pop() >> operandStack.pop());
+                    secondOperand = operandStack.pop();
+                    firstOperand = operandStack.pop();
+                    operandStack.push(firstOperand >> secondOperand);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_SHR_U:
-                    operandStack.push(operandStack.pop() >>> operandStack.pop());
+                    secondOperand = operandStack.pop();
+                    firstOperand = operandStack.pop();
+                    operandStack.push(firstOperand >>> secondOperand);
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_ROTL:
-                    operandStack.push(Integer.rotateLeft(operandStack.pop(), operandStack.pop()));
+                    secondOperand = operandStack.pop();
+                    firstOperand = operandStack.pop();
+                    operandStack.push(Integer.rotateLeft(firstOperand, secondOperand));
                     break;
                 case BinaryFormat.Instructions.Numeric.I32_ROTR:
-                    operandStack.push(Integer.rotateRight(operandStack.pop(), operandStack.pop()));
+                    secondOperand = operandStack.pop();
+                    firstOperand = operandStack.pop();
+                    operandStack.push(Integer.rotateRight(firstOperand, secondOperand));
                     break;
 
                 /******************************
                  * Control instructions
                  *****************************/
                 case BinaryFormat.Instructions.Control.UNREACHABLE:
-                    throw new ParserException("You reached unreachable code!");
+                    throw new RuntimeException("You reached unreachable code!");
                 case BinaryFormat.Instructions.Control.NOP:
                     //NO-OP
                     break;
@@ -494,7 +496,7 @@ public class WasmInterpreter {
                         int actualReturnValueCount = operandStack.size() - callStack.peek().getOperandStackBase();
 
                         if (expectedReturnValueCount != actualReturnValueCount) {
-                            throw new ParserException("Wrong number of return values! Expected: " +
+                            throw new RuntimeException("Wrong number of return values! Expected: " +
                                     expectedReturnValueCount + ", actual: " + actualReturnValueCount);
                         }
                         // Exit execution
@@ -504,27 +506,24 @@ public class WasmInterpreter {
                         callStack.pop();
                         Function returnedFunction = callStack.peek().getFunction();
                         instructionPointer = callStack.peek().getInstructionPointer();
-                        executingCodeStream = new ByteArrayInputStream(returnedFunction.getInstructions(), (int) instructionPointer + 1, returnedFunction.getInstructions().length);
+                        executingCodeStream = new ByteArrayInputStream(returnedFunction.getInstructions(), instructionPointer + 1, returnedFunction.getInstructions().length);
                     }
                     break;
                 case BinaryFormat.Instructions.Control.END:
-                    //This should be the final end of the execution
-                    LOG.info("Output: " + operandStack.pop());
+                    LOG.debug("End of execution");
+                    if (dumpLinearMemory) {
+                        LOG.debug("Write linear memory contents to file");
+                        saveLinearMemToFile();
+                    }
                     break;
-                case 0x1A: // drop
-                    //operandStack.pop();
+                case BinaryFormat.Instructions.Control.DROP:
+                    operandStack.pop();
                     break;
                 case -1:
-                    throw new ParserException("Unexpected end of file! @code 0x10 body");
-                case 127:
-                    LOG.debug("well, its ok..");
-                    break;
+                    throw new RuntimeException("Unexpected end of file! @code 0x10 body");
                 default:
-                    throw new ParserException("Invalid (or not implemented) instruction!");
+                    throw new RuntimeException("Invalid (or not implemented) instruction!");
             }
-//            if (stackFrame.isFirstLoopExec()) {
-//                stackFrame.getLoopQueue().add(opCode);
-//            }
             instructionPointer++;
         }
     }
@@ -541,5 +540,21 @@ public class WasmInterpreter {
             value = readUnsignedLeb128(is);
         }
         return value;
+    }
+
+    private void saveLinearMemToFile() {
+        // File is stored where j-wasm was executed
+        String filepath = System.getProperty("user.dir") + "\\";
+        String filename = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_H-m-s")) + "_linear_memory.bin";
+        try (
+            FileOutputStream fos = new FileOutputStream(filepath + filename)
+        ) {
+            for (byte[] page: module.getLinearMemory().getAllocatedPages()) {
+                fos.write(page);
+            }
+            fos.close();
+        } catch (IOException e) {
+            LOG.error("Error writing linear memory to file: " + e.getMessage());
+        }
     }
 }

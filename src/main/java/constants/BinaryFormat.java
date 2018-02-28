@@ -2,7 +2,6 @@ package constants;
 
 /**
  * Stores WebAssembly's byte constants.
- * <p>
  * [WASM] = WebAssembly Specification 1.0 (April 27, 2017)
  */
 public final class BinaryFormat {
@@ -154,6 +153,7 @@ public final class BinaryFormat {
             public static final byte END = 0x0B;
             public static final byte RETURN = 0x0F;
             public static final byte CALL = 0x10;
+            public static final byte DROP = 0x1A;
         }
 
         /**

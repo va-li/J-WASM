@@ -1,8 +1,7 @@
 package environment;
 
 /**
- * Created by Valentin
- * TODO documentation
+ * Stores instructions, number of parameters, local variables and return values of a single WASM function.
  */
 public class Function {
 
