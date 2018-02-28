@@ -1,4 +1,4 @@
-package parser.binary;
+package parser;
 
 import constants.BinaryFormat;
 import constants.ImplementationSpecific;
@@ -7,8 +7,7 @@ import environment.LinearMemory;
 import environment.Module;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import parser.Parser;
-import parser.ParserException;
+import sun.security.pkcs.ParsingException;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -22,11 +21,11 @@ import java.util.List;
 import static util.Leb128.readUnsignedLeb128;
 import static util.Leb128.unsignedLeb128Size;
 
-public class BinaryParser implements Parser {
+public class BinaryParser {
 
     private static Logger LOG = LoggerFactory.getLogger(BinaryParser.class);
 
-    private int currSection = -0x01;
+    private int previousSection = -0x01;
     //private byte[] code;
     private List<Function> functions = new ArrayList<>();
     private int startFunctionIndex = -1;
@@ -56,42 +55,51 @@ public class BinaryParser implements Parser {
         while ((sectionID = is.read()) != -1) {
             switch (sectionID) {
                 case BinaryFormat.Module.Section.Type.ID:
-                    if (this.currSection >= BinaryFormat.Module.Section.Type.ID) {
+                    if (this.previousSection >= BinaryFormat.Module.Section.Type.ID) {
                         throw new ParserException("Wrong order of sections! @Type(0x01)");
                     }
-                    currSection = BinaryFormat.Module.Section.Type.ID;
+                    previousSection = BinaryFormat.Module.Section.Type.ID;
                     readTypeSection(is);
                     break;
                 case BinaryFormat.Module.Section.Function.ID:
-                    if (this.currSection >= BinaryFormat.Module.Section.Function.ID) {
+                    if (this.previousSection >= BinaryFormat.Module.Section.Function.ID) {
                         throw new ParserException("Wrong order of sections! @Function(0x03)");
                     }
-                    currSection = BinaryFormat.Module.Section.Function.ID;
+                    previousSection = BinaryFormat.Module.Section.Function.ID;
                     readFunctionSection(is);
                     break;
                 case BinaryFormat.Module.Section.Memory.ID:
-                    if (this.currSection >= BinaryFormat.Module.Section.Memory.ID) {
+                    if (this.previousSection >= BinaryFormat.Module.Section.Memory.ID) {
                         throw new ParserException("Wrong order of sections! @Memory(0x05)");
                     }
-                    currSection = BinaryFormat.Module.Section.Memory.ID;
+                    previousSection = BinaryFormat.Module.Section.Memory.ID;
                     readMemorySection(is);
                     break;
                 case BinaryFormat.Module.Section.Start.ID:
-                    if (this.currSection >= BinaryFormat.Module.Section.Start.ID) {
+                    if (this.previousSection >= BinaryFormat.Module.Section.Start.ID) {
                         throw new ParserException("Wrong order of sections! @Start(0x08)");
                     }
-                    currSection = BinaryFormat.Module.Section.Start.ID;
+                    previousSection = BinaryFormat.Module.Section.Start.ID;
                     readStartSection(is);
                     break;
                 case BinaryFormat.Module.Section.Code.ID:
-                    if (this.currSection >= BinaryFormat.Module.Section.Code.ID) {
+                    if (this.previousSection >= BinaryFormat.Module.Section.Code.ID) {
                         throw new ParserException("Wrong order of sections! @Code(0x0A)");
                     }
-                    currSection = BinaryFormat.Module.Section.Code.ID;
+                    previousSection = BinaryFormat.Module.Section.Code.ID;
                     readCodeSection(is);
                     break;
-                case -1:
-                    //EOF reached
+                case BinaryFormat.Module.Section.Data.ID:
+                    if (this.previousSection >= BinaryFormat.Module.Section.Data.ID) {
+                        throw new ParserException("Wrong order of sections! @Code(0x0B)");
+                    }
+                    previousSection = BinaryFormat.Module.Section.Data.ID;
+                    readDataSection(is);
+                    break;
+                case BinaryFormat.Module.Section.Custom.ID:
+                    int sectionSizeGuess = is.read();
+                    is.skip(sectionSizeGuess);
+                    break;
                 default:
                     throw new ParserException("Not a valid section type");
             }
@@ -157,6 +165,37 @@ public class BinaryParser implements Parser {
         }
 
         linearMemory = new LinearMemory(initMem, maxMem);
+    }
+
+
+    private void readDataSection(final ByteArrayInputStream is) throws IOException, ParserException {
+        //section size guess for skipping purpose
+        int sectionSizeGuess = is.read();
+
+        int dataSegmentCount = is.read();
+
+        for (int i =  0; i < dataSegmentCount; i++) {
+            int memoryIndex = is.read();
+            if (memoryIndex != 0) {
+                throw new ParsingException("Only memory index zero is supported!");
+            } else if (linearMemory == null) {
+                throw new ParsingException("No linear memory defined for data!");
+            }
+
+            int constExpr = is.read();
+            int address = is.read();
+            int endExpr = is.read();
+            int dataSegmentSize = is.read();
+
+            if (constExpr != BinaryFormat.Instructions.Numeric.I32_CONST
+                || endExpr != BinaryFormat.Instructions.Control.END) {
+                throw new ParsingException("Malformed data segment offset!");
+            }
+
+            for (int j = 0; j < dataSegmentSize; j++) {
+                linearMemory.store(address + j, 0, 0, 1, is.read());
+            }
+        }
     }
 
     private void readFunctionSection(final ByteArrayInputStream is)
