@@ -5,9 +5,6 @@ import constants.ImplementationSpecific;
 import environment.Function;
 import environment.LinearMemory;
 import environment.Module;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import sun.security.pkcs.ParsingException;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -23,8 +20,6 @@ import static util.Leb128.unsignedLeb128Size;
 
 public class BinaryParser {
 
-    private static Logger LOG = LoggerFactory.getLogger(BinaryParser.class);
-
     private int previousSection = -0x01;
     //private byte[] code;
     private List<Function> functions = new ArrayList<>();
@@ -33,8 +28,6 @@ public class BinaryParser {
 
 
     public Module parse(File file) throws IOException, ParserException {
-        LOG.debug("Starting parsing of file '{}'...", file.getName());
-
         byte[] code = Files.readAllBytes(Paths.get(file.toURI()));
 
         ByteArrayInputStream is = new ByteArrayInputStream(code);
@@ -177,9 +170,9 @@ public class BinaryParser {
         for (int i =  0; i < dataSegmentCount; i++) {
             int memoryIndex = is.read();
             if (memoryIndex != 0) {
-                throw new ParsingException("Only memory index zero is supported!");
+                throw new ParserException("Only memory index zero is supported!");
             } else if (linearMemory == null) {
-                throw new ParsingException("No linear memory defined for data!");
+                throw new ParserException("No linear memory defined for data!");
             }
 
             int constExpr = is.read();
@@ -189,7 +182,7 @@ public class BinaryParser {
 
             if (constExpr != BinaryFormat.Instructions.Numeric.I32_CONST
                 || endExpr != BinaryFormat.Instructions.Control.END) {
-                throw new ParsingException("Malformed data segment offset!");
+                throw new ParserException("Malformed data segment offset!");
             }
 
             for (int j = 0; j < dataSegmentSize; j++) {

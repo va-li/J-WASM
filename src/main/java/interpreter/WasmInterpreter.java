@@ -5,8 +5,6 @@ import environment.ExecEnvFrame;
 import environment.Function;
 import environment.LinearMemory;
 import environment.Module;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import util.Leb128;
 
 import java.io.ByteArrayInputStream;
@@ -14,7 +12,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.Stack;
 
 import static util.Leb128.readUnsignedLeb128;
@@ -23,8 +20,6 @@ import static util.Leb128.readUnsignedLeb128;
  * Executes a WASM module's code
  */
 public class WasmInterpreter {
-    private static Logger LOG = LoggerFactory.getLogger(WasmInterpreter.class);
-
     /**
      * The Instruction Pointer points to a byte in the instruction stream (a byte array) that should be interpreted and
      * executed.
@@ -52,9 +47,7 @@ public class WasmInterpreter {
         this.module = module;
     }
 
-    public void execute(int[] parameters, boolean dumpLinearMemory) {
-        LOG.debug("Start of execution");
-
+    public void execute(boolean dumpLinearMemory) {
         Function executingFunction = module.getStartFunction();
 
         // The starting function in WebAssembly has no parameters and no local variables, therefore "new Integer[0]"
@@ -158,7 +151,6 @@ public class WasmInterpreter {
                 }
                 if (BinaryFormat.Instructions.Control.END == opCode) {
                     if (stackFrame.getEndStack().size() == 0) {
-                        LOG.debug(Arrays.toString(operandStack.toArray()));
                         return;
                     }
                     if (ExecEnvFrame.EndValue.LOOP.equals(stackFrame.getEndStack().pop())) {
@@ -452,7 +444,6 @@ public class WasmInterpreter {
                     }
                     break;
                 case BinaryFormat.Instructions.Control.ELSE:
-                    //TODO: hopefully this is right...
                     stackFrame.setSkipCode(true);
                     break;
                 case BinaryFormat.Instructions.Control.IF:
@@ -510,9 +501,8 @@ public class WasmInterpreter {
                     }
                     break;
                 case BinaryFormat.Instructions.Control.END:
-                    LOG.debug("End of execution");
+                    // End of execution of a WASM module
                     if (dumpLinearMemory) {
-                        LOG.debug("Write linear memory contents to file");
                         saveLinearMemToFile();
                     }
                     break;
@@ -554,7 +544,7 @@ public class WasmInterpreter {
             }
             fos.close();
         } catch (IOException e) {
-            LOG.error("Error writing linear memory to file: " + e.getMessage());
+            System.out.println("Error writing linear memory to file: " + e.getMessage());
         }
     }
 }

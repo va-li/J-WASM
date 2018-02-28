@@ -1,7 +1,5 @@
 package environment;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -21,8 +19,6 @@ public class LinearMemory {
         SIGNED,
         UNSIGNED
     }
-
-    private static Logger LOG = LoggerFactory.getLogger(LinearMemory.class);
 
     /**
      * Maximum number of pages allowed for this linear memory instance

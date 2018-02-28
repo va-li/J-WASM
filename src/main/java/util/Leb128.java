@@ -4,10 +4,6 @@ import parser.ParserException;
 
 import java.io.ByteArrayInputStream;
 
-/**
- * Created by Valentin
- * TODO documentation
- */
 public class Leb128 {
     /**
      * Reads an unsigned integer from {@code in}.
@@ -40,7 +36,7 @@ public class Leb128 {
      * @return its write size, in bytes
      */
     public static int unsignedLeb128Size(int value) {
-        // TODO: This could be much cleverer.
+        // This could be much cleverer...
         int remaining = value >> 7;
         int count = 0;
         while (remaining != 0) {
