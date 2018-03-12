@@ -8,12 +8,12 @@ Interpreter for a subset of [WebAssembly](http://webassembly.org) wirten in Java
 
 ### Prerequisites
 
-* Java SDK 8 or higher
+* Java SDK 8
 * Maven
 
 ### Installation
 
-Inside the projects root directory run
+Inside the project's root directory run
 
 ```
 $ mvn install
@@ -27,6 +27,21 @@ $ java -jar j-wasm-0.1-SNAPSHOT.jar
 ```
 
 This will print the usage message.
+
+## Examples
+
+Inside the project's root directory run
+
+```
+$ java -jar ./target/j-wasm-0.1-SNAPSHOT.jar ./src/test/resources/mem_data.wasm
+```
+This will execute the WebAssembly binary encoded module `mem_data.wasm`.
+
+Some simple test cases can be found in the `src/test/resources` directory. In there the folder `binary` contains WebAssembly binary encoded files. Inside the `text` directory you can find files encoded in WebAssembly's human readable text format containing the same instructions as their counterparts inside `binary` with the same name.
+
+Since WebAssembly does not have a "print()"-like built in functionality to produce any observable output we have included the possibility to dump the [linear memory](http://webassembly.org/docs/semantics/#linear-memory) contents to a file after successful execution by passing the `-d` or `--dump-linear-memory` flag to the J-WASM jar when executing a WebAssembly module.
+
+To write own WebAssembly modules you can use the [wat2wasm demo](https://cdn.rawgit.com/WebAssembly/wabt/aae5a4b7/demo/wat2wasm/) to write WebAssembly in text format and download the produced binary file and execute it with J-WASM.
 
 ## Features
 
