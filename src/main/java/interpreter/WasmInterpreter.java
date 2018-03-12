@@ -534,15 +534,18 @@ public class WasmInterpreter {
 
     private void saveLinearMemToFile() {
         // File is stored where j-wasm was executed
-        String filepath = System.getProperty("user.dir") + "\\";
-        String filename = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_H-m-s")) + "_linear_memory.bin";
-        try (
-            FileOutputStream fos = new FileOutputStream(filepath + filename)
-        ) {
+        File directory = new File(".");
+        try {
+            String filename = directory.getCanonicalPath() + File.separator +
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_H-m-s")) + "_linear_memory.bin";
+            FileOutputStream fos = new FileOutputStream(filename);
+            
             for (byte[] page: module.getLinearMemory().getAllocatedPages()) {
                 fos.write(page);
             }
+            
             fos.close();
+            
         } catch (IOException e) {
             System.out.println("Error writing linear memory to file: " + e.getMessage());
         }
