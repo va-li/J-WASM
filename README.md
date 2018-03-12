@@ -33,7 +33,7 @@ This will print the usage message.
 Inside the project's root directory run
 
 ```
-$ java -jar target/j-wasm-0.1-SNAPSHOT.jar src/test/resources/mem_data.wasm
+$ java -jar target/j-wasm-0.1-SNAPSHOT.jar src/test/resources/binary/mem_data.wasm
 ```
 This will execute the WebAssembly binary encoded module `mem_data.wasm`.
 
