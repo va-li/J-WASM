@@ -33,7 +33,7 @@ This will print the usage message.
 Inside the project's root directory run
 
 ```
-$ java -jar ./target/j-wasm-0.1-SNAPSHOT.jar ./src/test/resources/mem_data.wasm
+$ java -jar target/j-wasm-0.1-SNAPSHOT.jar src/test/resources/mem_data.wasm
 ```
 This will execute the WebAssembly binary encoded module `mem_data.wasm`.
 
@@ -43,9 +43,14 @@ To write your own WebAssembly modules you can use the [wat2wasm demo](https://cd
 
 ### J-WASM Output
 
-Since WebAssembly does not have a "print()"-like built in functionality by design to produce any observable output we have included the possibility to dump the [linear memory](http://webassembly.org/docs/semantics/#linear-memory) contents to a file after successful execution by passing the `-d` or `--dump-linear-memory` flag to the J-WASM jar when executing a WebAssembly module. This dump file can then be inspected with any hex viewer.
+Since WebAssembly does not have a "print()"-like built in functionality by design to produce any observable output we have included the possibility to dump the [linear memory](http://webassembly.org/docs/semantics/#linear-memory) contents to a file inside the current directory after successful execution by passing the `-d` or `--dump-linear-memory` flag to the J-WASM jar when executing a WebAssembly module: 
+```
+java -jar target/j-wasm-0.1-SNAPSHOT.jar src/test/resources/binary/mem_data.wasm -d
+```
 
-Another way to observe what is happening inside J-WASM is obviously to use a debugger (i.e. Eclipse, IntelliJ).
+The dump file can then be inspected with a hex viewer (e.g. linux utility `hexdump`).
+
+Another way to observe what is happening inside J-WASM is obviously to use a debugger (e.g. Eclipse, IntelliJ).
 
 ## Features
 
