@@ -48,7 +48,7 @@ Since WebAssembly does not have a "print()"-like built in functionality by desig
 java -jar target/j-wasm-0.1-SNAPSHOT.jar src/test/resources/binary/mem_data.wasm -d
 ```
 
-The dump file can then be inspected with a hex viewer (e.g. linux utility `hexdump`).
+The dump file can then be inspected with a hex viewer (when using linux's `hexdump` utility be sure to use it's `-C` option flag to avoid endianess confusion!).
 
 Another way to observe what is happening inside J-WASM is obviously to use a debugger (e.g. Eclipse, IntelliJ).
 
