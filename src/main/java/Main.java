@@ -49,7 +49,7 @@ public class Main {
 
     private static void printUsageMessage() {
         System.out.println(
-            "Usage: j-wasm <file-name.wasm>\n"
+            "Usage: j-wasm <file-name.wasm> [options]\n"
                 + "\t\tExecutes the passed WebAssebly program 'file-name.wasm'.\n\n"
                 + "\t-h, --help\n"
                 + "\t\t Prints this usage message.\n"
